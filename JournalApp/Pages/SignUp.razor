@@ -1,0 +1,165 @@
+﻿@page "/signup"
+@inject NavigationManager NavigationManager
+
+<div class="signup-container">
+    <div class="signup-card">
+        <h3 class="signup-title">Sign Up</h3>
+
+        <div class="form-group">
+            <label for="newUsername">Username/Email:</label>
+            <input type="text" id="newUsername" @bind="newUsername" class="form-input" placeholder="Enter username or email" />
+        </div>
+
+        <div class="form-group">
+            <label for="newPassword">Password:</label>
+            <input type="password" id="newPassword" @bind="newPassword" class="form-input" placeholder="Enter password" />
+        </div>
+
+        <div class="form-group">
+            <label for="confirmPassword">Confirm Password:</label>
+            <input type="password" id="confirmPassword" @bind="confirmPassword" class="form-input" placeholder="Confirm password" />
+        </div>
+
+        <div class="form-actions">
+            <button class="btn" @onclick="SignUpUser">Sign Up</button>
+        </div>
+
+        <div class="login-link">
+            <p>Already have an account? <a href="/login">Log In</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string newUsername;
+    private string newPassword;
+    private string confirmPassword;
+
+    private void SignUpUser()
+    {
+        if (newPassword != confirmPassword)
+        {
+            // Show error: passwords do not match
+            Console.WriteLine("Passwords do not match!");
+        }
+        else if (string.IsNullOrEmpty(newUsername) || string.IsNullOrEmpty(newPassword))
+        {
+            // Show error: fields are empty
+            Console.WriteLine("Please fill out all fields.");
+        }
+        else
+        {
+            // Normally, you'd save this information in a database or use an API
+            Console.WriteLine($"User {newUsername} signed up successfully.");
+            // Navigate to the login page after successful sign-up
+            NavigationManager.NavigateTo("/login");
+        }
+    }
+}
+
+<style>
+    /* Global Styles */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #FFF8E1; /* Cream background */
+        color: #333;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+    }
+
+    /* Signup Container */
+    .signup-container {
+        width: 100%;
+        max-width: 400px; /* Limit width for larger screens */
+        padding: 20px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin: 20px auto; /* Auto margin for centering */
+    }
+
+    /* Signup Card */
+    .signup-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Signup Title */
+    .signup-title {
+        color: #111111; /* Black-ish title color */
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* Form Group */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        font-size: 1rem;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    /* Input Styles */
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #333;
+        background-color: #f9f9f9;
+        box-sizing: border-box;
+        margin-bottom: 12px;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        border-color: #6B4F3B; /* Warm primary focus color */
+        outline: none;
+    }
+
+    /* Button Styles */
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn {
+        background-color: #6B4F3B; /* Warm primary button color */
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+    }
+
+    .btn:hover {
+        background-color: #593f31; /* Slightly darker */
+    }
+
+    /* Login Link */
+    .login-link {
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .login-link a {
+        color: #0288d1;
+        text-decoration: none;
+    }
+
+    .login-link a:hover {
+        text-decoration: underline;
+    }
+</style>

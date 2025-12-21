@@ -1,0 +1,194 @@
+﻿/* Global Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #FFF8E1; /* Cream background */
+    color: #333;
+    box-sizing: border-box;
+}
+
+h3 {
+    color: #111111; /* Black-ish title color */
+    margin-bottom: 15px;
+}
+
+/* Container for the entire dashboard */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    flex-wrap: wrap;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 220px;
+    background: linear-gradient(180deg, #eaf8ff 0%, #d6f0ff 100%); /* light blue gradient */
+    padding: 20px;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.06); /* subtle shadow */
+    position: fixed;
+    height: 100%;
+    top: 0;
+    left: 0;
+    transition: width 0.3s ease; /* Smooth width transition for responsiveness */
+}
+
+.sidebar-title {
+    text-align: center;
+    color: #074a7a; /* dark blue title for contrast */
+    margin-bottom: 24px; /* More space for a cleaner look */
+    font-weight: 700;
+    font-size: 1.5rem; /* Larger title for better visibility */
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .sidebar nav ul li {
+        margin-bottom: 18px;
+    }
+
+.sidebar .nav-link {
+    display: block;
+    padding: 12px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #0b3d5a; /* darker blue for links on light background */
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s; /* Smooth transition for hover effect */
+}
+
+    .sidebar .nav-link:hover {
+        background-color: rgba(3,61,90,0.06); /* subtle darker tint on hover */
+        color: #042634; /* slightly darker text on hover */
+    }
+
+    .sidebar .nav-link.active {
+        background-color: #0288d1; /* blue for active link */
+        color: #fff; /* White text for active link */
+        font-weight: 700;
+    }
+
+        .sidebar .nav-link.active::before {
+            content: "";
+            position: absolute;
+            left: -10px;
+            width: 6px;
+            height: 100%;
+            background: #0288d1; /* same active blue */
+            border-radius: 4px;
+        }
+
+/* Main Content Styles */
+.main-content {
+    margin-left: 220px; /* Adjust for sidebar width */
+    padding: 20px;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    flex-grow: 1;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+/* Streak Info Section */
+.streak-info {
+    background-color: #ecf0f1; /* Light gray background for streak info */
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+    .streak-info p {
+        margin: 5px 0;
+        color: #16a085; /* Matching the active link teal */
+        font-size: 16px;
+    }
+
+/* Button Styles */
+button, .btn {
+    padding: 10px 20px;
+    background-color: #6B4F3B; /* Warm primary button color */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover, .btn:hover {
+    background-color: #593f31; /* Slightly darker on hover */
+}
+
+.btn.secondary {
+    background-color: #E8D9C4; /* Light beige secondary */
+    color: #6B4F3B;
+}
+
+/* Mobile View */
+@media (max-width: 768px) {
+    /* Sidebar adjustments for smaller screens */
+    .sidebar {
+        width: 60px; /* Reduced sidebar width */
+    }
+
+    .sidebar-title {
+        font-size: 1.2rem;
+    }
+
+    .sidebar .nav-link {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .main-content {
+        margin-left: 60px; /* Adjust main content for reduced sidebar */
+    }
+}
+
+/* Layout Adjustments */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    flex-wrap: wrap;
+}
+
+    .dashboard-container .main-content,
+    .dashboard-container .sidebar {
+        flex-grow: 1;
+    }
+/* Mobile View */
+@media (max-width: 768px) {
+    /* Sidebar adjustments for smaller screens */
+    .sidebar {
+        width: 60px; /* Reduced sidebar width */
+    }
+
+    .sidebar-title {
+        font-size: 1.2rem;
+    }
+
+    .sidebar .nav-link {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .main-content {
+        margin-left: 60px; /* Adjust main content for reduced sidebar */
+    }
+}
+
+/* Layout Adjustments */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+    flex-wrap: wrap;
+}
+
+    .dashboard-container .main-content,
+    .dashboard-container .sidebar {
+        flex-grow: 1;
+    }

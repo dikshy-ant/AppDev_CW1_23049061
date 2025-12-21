@@ -1,0 +1,271 @@
+@page "/analytics"
+@inject NavigationManager NavigationManager
+
+@using System.Globalization
+
+<div class="analytics-container">
+    <div class="card">
+        <h3 class="card-title">Analytics</h3>
+
+        <div class="filters">
+            <label>From: <input type="date" @bind="FilterStartStr" /></label>
+            <label>To: <input type="date" @bind="FilterEndStr" /></label>
+            <button class="btn small" @onclick="ApplyFilter">Apply</button>
+        </div>
+
+        <div class="grid">
+            <div class="panel">
+                <h4>Mood Distribution</h4>
+                <div class="pie" style="background: @PieGradient"></div>
+                <div class="legend">
+                    <div><span class="sw positive"></span> Positive (@MoodPercent("Positive")%)</div>
+                    <div><span class="sw neutral"></span> Neutral (@MoodPercent("Neutral")%)</div>
+                    <div><span class="sw negative"></span> Negative (@MoodPercent("Negative")%)</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h4>Key Metrics</h4>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="m-value">@MostFrequentMood</div>
+                        <div class="m-label">Most Frequent Mood</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-value">@CurrentStreak</div>
+                        <div class="m-label">Daily Streak (current)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-value">@LongestStreak</div>
+                        <div class="m-label">Longest Streak</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel wide">
+                <h4>Most Used Tags</h4>
+                <div class="tags-bars">
+                    @foreach (var t in TopTags)
+                    {
+                        <div class="tag-row">
+                            <div class="tag-name">@t.Key (@t.Value)</div>
+                            <div class="tag-bar" style="width:@(TagBarPercent(t.Value))%"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="panel wide">
+                <h4>Word Count Trends (avg per day)</h4>
+                <svg class="line-chart" viewBox="0 0 100 30" preserveAspectRatio="none">
+                    <polyline fill="none" stroke="#6B4F3B" stroke-width="1.5" points="@LinePoints" />
+                </svg>
+            </div>
+
+            <div class="panel wide">
+                <h4>Missed Days</h4>
+                @if (MissedDays.Any())
+                {
+                    <ul class="missed">
+                        @foreach (var d in MissedDays)
+                        {
+                            <li>@d.ToString("yyyy-MM-dd")</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <div>No missed days in range.</div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private record JournalEntry(DateTime Date, string Mood, string[] Tags, int WordCount);
+
+    private List<JournalEntry> AllEntries = new();
+    private DateTime FilterStart;
+    private DateTime FilterEnd;
+    private string FilterStartStr {
+        get => FilterStart.ToString("yyyy-MM-dd");
+        set { if (DateTime.TryParse(value, out var d)) FilterStart = d; }
+    }
+    private string FilterEndStr {
+        get => FilterEnd.ToString("yyyy-MM-dd");
+        set { if (DateTime.TryParse(value, out var d)) FilterEnd = d; }
+    }
+
+    private IEnumerable<JournalEntry> Filtered => AllEntries.Where(e => e.Date.Date >= FilterStart.Date && e.Date.Date <= FilterEnd.Date);
+
+    protected override void OnInitialized()
+    {
+        // seed some sample data for demo
+        var today = DateTime.Today;
+        AllEntries = new List<JournalEntry>();
+        var rnd = new Random(1);
+        var moods = new[] { "Happy", "Neutral", "Sad", "Anxious", "Content", "Angry" };
+        for (int i = 0; i < 60; i++)
+        {
+            var date = today.AddDays(-i);
+            // randomly skip some days
+            if (rnd.NextDouble() < 0.22) continue;
+            var mood = moods[rnd.Next(moods.Length)];
+            var tags = (rnd.NextDouble() < 0.6) ? new[] { "Work" } : new[] { "Health", "Travel", "Personal" };
+            var wc = rnd.Next(20, 400);
+            AllEntries.Add(new JournalEntry(date, mood, tags, wc));
+        }
+
+        // default filter last 30 days
+        FilterEnd = today;
+        FilterStart = today.AddDays(-30);
+        Recalculate();
+    }
+
+    private void ApplyFilter()
+    {
+        // ensure dates
+        if (FilterStart > FilterEnd) (FilterStart, FilterEnd) = (FilterEnd, FilterStart);
+        Recalculate();
+    }
+
+    // derived values
+    private string PieGradient = "conic-gradient(#4caf50 0deg, #ffc107 0deg, #f44336 0deg)";
+    private int CurrentStreak;
+    private int LongestStreak;
+    private string MostFrequentMood = "-";
+    private List<DateTime> MissedDays = new();
+    private List<KeyValuePair<string,int>> TopTags = new();
+    private string LinePoints = "";
+
+    private void Recalculate()
+    {
+        var entries = Filtered.ToList();
+        // mood buckets
+        var positive = new[] { "Happy", "Content" };
+        var negative = new[] { "Sad", "Angry", "Anxious" };
+
+        var posCount = entries.Count(e => positive.Contains(e.Mood));
+        var neuCount = entries.Count(e => !positive.Contains(e.Mood) && !negative.Contains(e.Mood));
+        var negCount = entries.Count(e => negative.Contains(e.Mood));
+        var total = Math.Max(1, posCount + neuCount + negCount);
+
+        var posPct = (int)Math.Round(posCount * 100.0 / total);
+        var neuPct = (int)Math.Round(neuCount * 100.0 / total);
+        var negPct = 100 - posPct - neuPct;
+
+        // build conic gradient
+        PieGradient = $"conic-gradient(#6B4F3B 0% {posPct}%, #E8D9C4 {posPct}% {posPct + neuPct}%, #e57373 {posPct + neuPct}% 100%)";
+
+        // most frequent mood
+        MostFrequentMood = entries.GroupBy(e => e.Mood).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() ?? "-";
+
+        // streaks
+        var orderedDates = AllEntries.Select(e => e.Date.Date).Distinct().OrderBy(d => d).ToList();
+        LongestStreak = CalculateLongestStreak(orderedDates);
+        CurrentStreak = CalculateCurrentStreak(orderedDates);
+
+        // missed days in range
+        MissedDays = Enumerable.Range(0, (FilterEnd - FilterStart).Days + 1)
+            .Select(i => FilterStart.AddDays(i).Date)
+            .Where(d => !entries.Any(e => e.Date.Date == d)).ToList();
+
+        // tags
+        var tagCounts = entries.SelectMany(e => e.Tags).GroupBy(t => t).ToDictionary(g => g.Key, g => g.Count());
+        TopTags = tagCounts.OrderByDescending(kv => kv.Value).ToList();
+
+        // line points: average words per day over range (normalized to 0-30 viewBox)
+        var days = Enumerable.Range(0, (FilterEnd - FilterStart).Days + 1).Select(i => FilterStart.AddDays(i)).ToList();
+        var avgs = days.Select(d =>
+        {
+            var dayEntries = entries.Where(e => e.Date.Date == d.Date).ToList();
+            return dayEntries.Any() ? dayEntries.Average(e => e.WordCount) : 0.0;
+        }).ToList();
+        LinePoints = BuildPolylinePoints(avgs);
+    }
+
+    private int CalculateLongestStreak(List<DateTime> dates)
+    {
+        if (!dates.Any()) return 0;
+        int longest = 0;
+        int current = 1;
+        for (int i = 1; i < dates.Count; i++)
+        {
+            if ((dates[i] - dates[i - 1]).TotalDays == 1) current++; else current = 1;
+            longest = Math.Max(longest, current);
+        }
+        return Math.Max(longest, current);
+    }
+
+    private int CalculateCurrentStreak(List<DateTime> dates)
+    {
+        if (!dates.Any()) return 0;
+        var today = DateTime.Today;
+        int streak = 0;
+        var set = dates.ToHashSet();
+        var d = today;
+        while (set.Contains(d)) { streak++; d = d.AddDays(-1); }
+        return streak;
+    }
+
+    private string BuildPolylinePoints(List<double> avgs)
+    {
+        if (!avgs.Any()) return "";
+        double max = Math.Max(1, avgs.Max());
+        var points = new List<string>();
+        for (int i = 0; i < avgs.Count; i++)
+        {
+            var x = (i * 100.0) / Math.Max(1, avgs.Count - 1);
+            var y = 30 - (avgs[i] / max * 28); // leave small padding
+            points.Add($"{x.ToString(CultureInfo.InvariantCulture)},{y.ToString(CultureInfo.InvariantCulture)}");
+        }
+        return string.Join(" ", points);
+    }
+
+    private string TagBarPercent(int value)
+    {
+        var max = TopTags.Any() ? TopTags.Max(t => t.Value) : 1;
+        var pct = (int)Math.Round(value * 100.0 / max);
+        return pct.ToString();
+    }
+
+    private int MoodPercent(string bucket)
+    {
+        var entries = Filtered.ToList();
+        var positive = new[] { "Happy", "Content" };
+        var negative = new[] { "Sad", "Angry", "Anxious" };
+        var posCount = entries.Count(e => positive.Contains(e.Mood));
+        var neuCount = entries.Count(e => !positive.Contains(e.Mood) && !negative.Contains(e.Mood));
+        var negCount = entries.Count(e => negative.Contains(e.Mood));
+        var total = Math.Max(1, posCount + neuCount + negCount);
+        return bucket == "Positive" ? (int)Math.Round(posCount * 100.0 / total) : bucket == "Neutral" ? (int)Math.Round(neuCount * 100.0 / total) : (int)Math.Round(negCount * 100.0 / total);
+    }
+}
+
+<style>
+    .analytics-container { display:flex; justify-content:center; padding:24px; }
+    .card { width:100%; max-width:1000px; background:#fff; padding:20px; border-radius:10px; }
+    .card-title { color:#111111; font-size:1.5rem; margin-bottom:12px; text-align:left; }
+    .filters { display:flex; gap:12px; align-items:center; margin-bottom:16px; }
+    .filters input { padding:8px; border-radius:6px; border:1px solid #ddd; }
+    .grid { display:grid; grid-template-columns: repeat(2, 1fr); gap:16px; }
+    .panel { background:#fff; padding:12px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+    .panel.wide { grid-column: span 2; }
+    .pie { width:120px; height:120px; border-radius:50%; margin:12px auto; box-shadow: inset 0 0 12px rgba(255,255,255,0.2); }
+    .legend { display:flex; justify-content:space-around; margin-top:8px; font-size:0.9rem; }
+    .sw { display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:6px; }
+    .sw.positive { background:#6B4F3B; }
+    .sw.neutral { background:#E8D9C4; }
+    .sw.negative { background:#e57373; }
+    .metrics { display:flex; gap:12px; justify-content:space-around; }
+    .metric { text-align:center; }
+    .m-value { font-weight:700; font-size:1.25rem; color:#6B4F3B; }
+    .tags-bars { display:flex; flex-direction:column; gap:8px; }
+    .tag-row { display:flex; align-items:center; gap:12px; }
+    .tag-name { width:140px; font-weight:600; }
+    .tag-bar { height:14px; background:#6B4F3B; border-radius:6px; }
+    .line-chart { width:100%; height:120px; }
+    .missed { columns:2; }
+    @@media (max-width:720px) { .grid { grid-template-columns: 1fr; } .panel.wide { grid-column: auto; } }
+</style>

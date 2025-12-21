@@ -1,0 +1,155 @@
+﻿@page "/login"
+@inject NavigationManager NavigationManager
+
+<div class="login-container">
+    <div class="login-card">
+        <h3 class="login-title">Login</h3>
+
+        <div class="form-group">
+            <label for="username">Username/Email:</label>
+            <input type="text" id="username" @bind="username" class="form-input" placeholder="Enter username or email" />
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" @bind="password" class="form-input" placeholder="Enter password" />
+        </div>
+
+        <div class="form-actions">
+            <button class="btn" @onclick="LoginUser">Log In</button>
+        </div>
+
+        <div class="signup-link">
+            <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string username;
+    private string password;
+
+    private void LoginUser()
+    {
+        // Logic to validate user credentials
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        {
+            // Show error message
+            Console.WriteLine("Please fill out both fields.");
+        }
+        else
+        {
+            // Normally, this would check the credentials from a database or an API
+            Console.WriteLine($"Logging in user: {username}");
+            // Navigate to the dashboard after successful login
+            NavigationManager.NavigateTo("/dashboard");
+        }
+    }
+}
+
+<style>
+    /* Global Styles */
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #FFF8E1; /* Cream background */
+        color: #333;
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+    }
+
+    /* Login Container */
+    .login-container {
+        width: 100%;
+        max-width: 400px; /* Limit width for larger screens */
+        padding: 20px;
+        background-color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        margin: 20px auto; /* Removed flex centering, just auto-margin to center horizontally */
+    }
+
+    /* Login Card */
+    .login-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Login Title */
+    .login-title {
+        color: #111111; /* Black-ish title color */
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    /* Form Group */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        font-size: 1rem;
+        color: #333;
+        margin-bottom: 8px;
+        display: block;
+    }
+
+    /* Input Styles */
+    .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #333;
+        background-color: #f9f9f9;
+        box-sizing: border-box;
+        margin-bottom: 12px;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+        border-color: #6B4F3B; /* Warm primary focus color */
+        outline: none;
+    }
+
+    /* Button Styles */
+    .form-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .btn {
+        background-color: #6B4F3B; /* Warm primary button color */
+        color: white;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        width: 100%;
+    }
+
+    .btn:hover {
+        background-color: #593f31; /* Slightly darker */
+    }
+
+    /* Sign-up Link */
+    .signup-link {
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .signup-link a {
+        color: #0288d1;
+        text-decoration: none;
+    }
+
+    .signup-link a:hover {
+        text-decoration: underline;
+    }
+</style>
