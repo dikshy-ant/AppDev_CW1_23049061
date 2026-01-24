@@ -1,0 +1,380 @@
+@page "/analytics"
+@using MyJournal.Services
+@using MyJournal.Entities
+@using MyJournal.Models.Display
+@using MudBlazor
+@using MudBlazor.Components
+@inject JournalService JournalService
+@inject ISnackbar Snackbar
+@inject PinProtectionService PinProtectionService
+
+<div class="text-center mb-4">
+    <h2>Dashboard Analytics</h2>
+</div>
+
+@if (isLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudProgressCircular Indeterminate="true" />
+            <p class="mt-3">Loading analytics data...</p>
+        </MudPaper>
+    </MudContainer>
+}
+else if (analyticsData != null)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+        <!-- Time Period Selector -->
+        <MudPaper Elevation="1" Class="pa-3 mb-4">
+            <div class="d-flex justify-space-between align-center flex-wrap gap-2">
+                <div>
+                    <MudText Typo="Typo.h6">Analytics Overview</MudText>
+                    <MudText Typo="Typo.caption" Class="text-muted">Showing data for @selectedPeriod</MudText>
+                </div>
+                <div>
+                    <MudSelect T="string" Label="Time Period" Variant="Variant.Outlined" @bind-Value="selectedPeriod" Class="period-selector">
+                        <MudSelectItem T="string" Value="@("Last 7 Days")">Last 7 Days</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Last 30 Days")">Last 30 Days</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("Last 90 Days")">Last 90 Days</MudSelectItem>
+                        <MudSelectItem T="string" Value="@("All Time")">All Time</MudSelectItem>
+                    </MudSelect>
+                </div>
+            </div>
+        </MudPaper>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards mb-4">
+            <MudGrid>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="3" Class="pa-4 summary-card total-entries">
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.h4">@analyticsData.TotalEntries</MudText>
+                                <MudText Typo="Typo.subtitle1">Total Entries</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Class="summary-icon" />
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="3" Class="pa-4 summary-card total-words">
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.h4">@analyticsData.TotalWords.ToString("N0")</MudText>
+                                <MudText Typo="Typo.subtitle1">Total Words</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.TextFields" Size="Size.Large" Class="summary-icon" />
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="3" Class="pa-4 summary-card avg-words">
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.h4">@analyticsData.AverageWordsPerEntry.ToString("F0")</MudText>
+                                <MudText Typo="Typo.subtitle1">Avg Words/Entry</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.BarChart" Size="Size.Large" Class="summary-icon" />
+                        </div>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" sm="6" md="3">
+                    <MudPaper Elevation="3" Class="pa-4 summary-card current-streak">
+                        <div class="d-flex align-center justify-space-between">
+                            <div>
+                                <MudText Typo="Typo.h4">@analyticsData.CurrentStreak</MudText>
+                                <MudText Typo="Typo.subtitle1">Current Streak</MudText>
+                            </div>
+                            <MudIcon Icon="@Icons.Material.Filled.LocalFireDepartment" Size="Size.Large" Class="summary-icon" />
+                        </div>
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </div>
+
+        <!-- Charts Section -->
+        <MudGrid Spacing="4">
+            <!-- Mood Distribution -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <h3 class="mb-3">Mood Distribution</h3>
+                    @if (analyticsData.MoodDistribution.Any())
+                    {
+                        <div class="mood-chart">
+                            @foreach (var mood in analyticsData.MoodDistribution)
+                            {
+                                <div class="mood-item mb-2">
+                                    <div class="d-flex justify-space-between align-center mb-1">
+                                        <span class="mood-name">@mood.Icon @mood.Name</span>
+                                        <span class="mood-count">@mood.Count (@mood.Percentage.ToString("F1")%)</span>
+                                    </div>
+                                    <MudProgressLinear Value="@mood.Percentage" Color="@GetMoodColor(mood.Category)" Class="mood-progress" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted text-center py-4">No mood data available</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <!-- Top Tags -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <h3 class="mb-3">Most Used Tags</h3>
+                    @if (analyticsData.TopTags.Any())
+                    {
+                        <div class="tags-chart">
+                            @foreach (var tag in analyticsData.TopTags.Take(10))
+                            {
+                                <div class="tag-item mb-2">
+                                    <div class="d-flex justify-space-between align-center mb-1">
+                                        <span class="tag-name">#@tag.Name</span>
+                                        <span class="tag-count">@tag.Count uses</span>
+                                    </div>
+                                    <MudProgressLinear Value="@tag.Percentage" Color="Color.Primary" Class="tag-progress" />
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted text-center py-4">No tags used yet</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <!-- Word Count Trend -->
+            <MudItem xs="12">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <h3 class="mb-3">Word Count Trend</h3>
+                    @if (analyticsData.WordCountTrend.Any())
+                    {
+                        <div class="word-trend">
+                            <MudGrid Spacing="2">
+                                @foreach (var trend in analyticsData.WordCountTrend.Take(7))
+                                {
+                                    <MudItem xs="12" sm="6" md="4" lg="3">
+                                        <div class="trend-day">
+                                            <div class="trend-date">@trend.Date.ToString("MMM dd")</div>
+                                            <div class="trend-words">@trend.WordCount words</div>
+                                            @if (trend.PrimaryMood != null)
+                                            {
+                                                <div class="trend-mood">@trend.PrimaryMood.Icon @trend.PrimaryMood.Name</div>
+                                            }
+                                        </div>
+                                    </MudItem>
+                                }
+                            </MudGrid>
+                        </div>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="text-muted text-center py-4">No entries in selected period</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+
+            <!-- Entry Frequency -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <h3 class="mb-3">Entry Frequency</h3>
+                    <div class="frequency-stats">
+                        <div class="stat-item">
+                            <MudText Typo="Typo.h6">Entries this week</MudText>
+                            <MudText Typo="Typo.h4">@analyticsData.EntriesThisWeek</MudText>
+                        </div>
+                        <div class="stat-item">
+                            <MudText Typo="Typo.h6">Entries this month</MudText>
+                            <MudText Typo="Typo.h4">@analyticsData.EntriesThisMonth</MudText>
+                        </div>
+                        <div class="stat-item">
+                            <MudText Typo="Typo.h6">Most productive day</MudText>
+                            <MudText Typo="Typo.h4">@analyticsData.MostProductiveDayOfWeek</MudText>
+                        </div>
+                    </div>
+                </MudPaper>
+            </MudItem>
+
+            <!-- Writing Insights -->
+            <MudItem xs="12" md="6">
+                <MudPaper Elevation="2" Class="pa-4">
+                    <h3 class="mb-3">Writing Insights</h3>
+                    <div class="insights-stats">
+                        <div class="insight-item">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Color="Color.Success" Class="mr-2" />
+                            <MudText Typo="Typo.body2">Longest entry: @analyticsData.LongestEntryWords words</MudText>
+                        </div>
+                        <div class="insight-item">
+                            <MudIcon Icon="@Icons.Material.Filled.TrendingDown" Color="Color.Info" Class="mr-2" />
+                            <MudText Typo="Typo.body2">Shortest entry: @analyticsData.ShortestEntryWords words</MudText>
+                        </div>
+                        <div class="insight-item">
+                            <MudIcon Icon="@Icons.Material.Filled.EmojiEmotions" Color="Color.Warning" Class="mr-2" />
+                            <MudText Typo="Typo.body2">Most frequent mood: @analyticsData.MostFrequentMood</MudText>
+                        </div>
+                        <div class="insight-item">
+                            <MudIcon Icon="@Icons.Material.Filled.LocalOffer" Color="Color.Secondary" Class="mr-2" />
+                            <MudText Typo="Typo.body2">Unique tags used: @analyticsData.UniqueTagsCount</MudText>
+                        </div>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Analytics" Size="Size.Large" Class="mb-3" />
+            <h4>No Analytics Data</h4>
+            <p class="text-muted">Start journaling to see your analytics and insights!</p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/journal">
+                <MudIcon Icon="@Icons.Material.Filled.Add" Class="mr-2" />
+                Create Your First Entry
+            </MudButton>
+        </MudPaper>
+    </MudContainer>
+}
+
+@code {
+    private AnalyticsDisplayModel? analyticsData;
+    private bool isLoading = true;
+    private string selectedPeriod = "Last 30 Days";
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check PIN protection before loading content
+        await PinProtectionService.RequireAuthenticationAsync();
+        
+        await LoadAnalyticsData();
+    }
+
+    private async Task LoadAnalyticsData()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            var (startDate, endDate) = GetDateRangeForPeriod(selectedPeriod);
+            var result = await JournalService.GetAnalyticsAsync(startDate, endDate);
+
+            if (result.Success)
+            {
+                analyticsData = result.Data;
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Failed to load analytics", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading analytics: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private (DateTime startDate, DateTime endDate) GetDateRangeForPeriod(string period)
+    {
+        var today = DateTime.Today;
+        return period switch
+        {
+            "Last 7 Days" => (today.AddDays(-7), today),
+            "Last 30 Days" => (today.AddDays(-30), today),
+            "Last 90 Days" => (today.AddDays(-90), today),
+            "All Time" => (DateTime.MinValue, today),
+            _ => (today.AddDays(-30), today)
+        };
+    }
+
+    private Color GetMoodColor(MoodCategory category) => category switch
+    {
+        MoodCategory.Positive => Color.Success,
+        MoodCategory.Neutral => Color.Warning,
+        MoodCategory.Negative => Color.Error,
+        _ => Color.Default
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadAnalyticsData();
+    }
+}
+
+<style>
+.summary-cards .summary-card {
+    border: 1px solid var(--mud-palette-grey-default);
+    background: var(--mud-palette-surface);
+}
+
+
+.summary-icon {
+    opacity: 0.7;
+}
+
+.mood-chart, .tags-chart {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.mood-progress, .tag-progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.mood-name, .tag-name {
+    font-weight: 500;
+}
+
+.mood-count, .tag-count {
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.trend-day {
+    text-align: center;
+    padding: 8px;
+    border-radius: 8px;
+    background-color: var(--mud-palette-grey-light);
+}
+
+.trend-date {
+    font-weight: 600;
+    color: var(--mud-palette-primary);
+}
+
+.trend-words {
+    font-size: 0.875rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.trend-mood {
+    font-size: 0.875rem;
+    margin-top: 4px;
+}
+
+.frequency-stats .stat-item, .insights-stats .insight-item {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--mud-palette-divider);
+}
+
+.frequency-stats .stat-item:last-child, .insights-stats .insight-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.period-selector {
+    min-width: 150px;
+}
+</style>

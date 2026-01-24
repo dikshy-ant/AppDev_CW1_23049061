@@ -1,0 +1,477 @@
+@page "/search"
+@using MyJournal.Services
+@using MyJournal.Entities
+@using MyJournal.Models.Display
+@using MyJournal.Models.Input
+@inject JournalService JournalService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject PinProtectionService PinProtectionService
+
+<div class="text-center mb-4">
+    <h2>Search & Filter Journal Entries</h2>
+</div>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudForm @ref="searchForm">
+            <MudGrid Spacing="3">
+                <!-- Search Input -->
+                <MudItem xs="12" md="6">
+                    <MudTextField T="string" 
+                                  Label="Search by title or content" 
+                                  Variant="Variant.Outlined"
+                                  @bind-Value="searchModel.Query"
+                                  Immediate="true"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  OnKeyUp="OnSearchKeyUp" />
+                </MudItem>
+
+                <!-- Date Range -->
+                <MudItem xs="12" md="3">
+                    <MudDatePicker Label="Start Date" 
+                                   Variant="Variant.Outlined"
+                                   Date="@searchModel.StartDate"
+                                   DateChanged="(DateTime? d) => { if (d.HasValue) searchModel.StartDate = d.Value; }" />
+                </MudItem>
+                <MudItem xs="12" md="3">
+                    <MudDatePicker Label="End Date" 
+                                   Variant="Variant.Outlined"
+                                   Date="@searchModel.EndDate"
+                                   DateChanged="(DateTime? d) => { if (d.HasValue) searchModel.EndDate = d.Value; }" />
+                </MudItem>
+
+                <!-- Mood Filter -->
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" Label="Filter by Primary Mood" Variant="Variant.Outlined" @bind-Value="searchModel.PrimaryMoodId" Clearable="true">
+                        @if (moods?.Any() == true)
+                        {
+                            @foreach (var mood in moods)
+                            {
+                                <MudSelectItem T="int?" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <!-- Category Filter -->
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" Label="Filter by Category" Variant="Variant.Outlined" @bind-Value="searchModel.CategoryId" Clearable="true">
+                        @if (categories?.Any() == true)
+                        {
+                            @foreach (var category in categories)
+                            {
+                                <MudSelectItem T="int?" Value="@category.Id">@category.Name</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <!-- Tag Filter -->
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" Label="Filter by Tag" Variant="Variant.Outlined" @bind-Value="searchModel.TagId" Clearable="true">
+                        @if (tags?.Any() == true)
+                        {
+                            @foreach (var tag in tags)
+                            {
+                                <MudSelectItem T="int?" Value="@tag.Id">#@tag.Name</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </MudItem>
+
+                <!-- Action Buttons -->
+                <MudItem xs="12">
+                    <div class="d-flex gap-2">
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Search"
+                                   OnClick="PerformSearch"
+                                   Disabled="isSearching">
+                            @if (isSearching)
+                            {
+                                <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                            }
+                            Search
+                        </MudButton>
+                        
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Secondary"
+                                   StartIcon="@Icons.Material.Filled.Clear"
+                                   OnClick="ClearFilters">
+                            Clear Filters
+                        </MudButton>
+                    </div>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </MudPaper>
+
+    <!-- Results -->
+    @if (isSearching)
+    {
+        <MudPaper Elevation="1" Class="pa-6 text-center">
+            <MudProgressCircular Indeterminate="true" />
+            <p class="mt-3">Searching entries...</p>
+        </MudPaper>
+    }
+    else if (searchResults?.Any() == true)
+    {
+        <MudPaper Elevation="1" Class="pa-4">
+            <div class="d-flex justify-space-between align-center mb-3">
+                <h3>Search Results (@totalResults entries found)</h3>
+                <MudText Typo="Typo.caption" Class="text-muted">
+                    Page @currentPage of @totalPages
+                </MudText>
+            </div>
+
+            @foreach (var entry in searchResults)
+            {
+                <MudPaper Elevation="2" Class="pa-4 mb-3 entry-card">
+                    <!-- Entry Header -->
+                    <div class="d-flex justify-space-between align-start mb-3">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-center gap-2 mb-2">
+                                <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" Color="Color.Primary" />
+                                <span class="entry-date">@entry.FormattedDate</span>
+                                @if (entry.Date.Date == DateTime.Today)
+                                {
+                                    <MudChip T="bool" Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small">Today</MudChip>
+                                }
+                            </div>
+                            
+                            @if (entry.PrimaryMood != null)
+                            {
+                                <div class="d-flex align-center gap-2 mb-2">
+                                    <span class="mood-display">@entry.PrimaryMood.Icon @entry.PrimaryMood.Name</span>
+                                </div>
+                            }
+
+                            @if (entry.Category != null)
+                            {
+                                <div class="d-flex align-center gap-2 mb-2">
+                                    <MudChip T="bool" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small">
+                                        @entry.Category.Name
+                                    </MudChip>
+                                </div>
+                            }
+                        </div>
+                        
+                        <div class="d-flex align-center gap-2">
+                            @if (entry.UpdatedAt > entry.CreatedAt)
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Secondary" />
+                            }
+                            <span class="word-count">@entry.WordCount words</span>
+                        </div>
+                    </div>
+
+                    <!-- Entry Content Preview -->
+                    <div class="entry-content-preview mb-3">
+                        <p class="ma-0">@entry.PlainTextPreview</p>
+                    </div>
+
+                    <!-- Tags -->
+                    @if (entry.Tags.Any())
+                    {
+                        <div class="mb-3">
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var tag in entry.Tags.Take(5))
+                                {
+                                    <span class="tag-chip">#@tag.Name</span>
+                                }
+                                @if (entry.Tags.Count > 5)
+                                {
+                                    <span class="tag-chip more-tags">+@(entry.Tags.Count - 5)</span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Action Button -->
+                    <div class="d-flex justify-end">
+                        <MudButton Variant="Variant.Outlined" 
+                                   Color="Color.Primary" 
+                                   Size="Size.Small"
+                                   EndIcon="@Icons.Material.Filled.ArrowForward"
+                                   Href="@($"/view-entry?date={entry.Date:yyyy-MM-dd}")">
+                            Read More
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            }
+
+            <!-- Pagination -->
+            @if (totalPages > 1)
+            {
+                <div class="mt-4">
+                    <MudPaper Elevation="1" Class="pa-3">
+                        <div class="d-flex justify-space-between align-center flex-wrap gap-2">
+                            <div class="d-flex align-center gap-2">
+                                <MudButton Variant="Variant.Outlined" 
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           StartIcon="@Icons.Material.Filled.KeyboardArrowLeft"
+                                           OnClick="PreviousPage"
+                                           Disabled="currentPage == 1 || isSearching">
+                                    Previous
+                                </MudButton>
+                                
+                                <div class="d-flex align-center gap-1">
+                                    @for (int i = 1; i <= totalPages; i++)
+                                    {
+                                        if (i == 1 || i == totalPages || (i >= currentPage - 1 && i <= currentPage + 1))
+                                        {
+                                            <MudButton Variant="@((i == currentPage) ? Variant.Filled : Variant.Outlined)"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       OnClick="() => GoToPage(i)"
+                                                       Disabled="isSearching">
+                                                @i
+                                            </MudButton>
+                                        }
+                                        else if (i == currentPage - 2 || i == currentPage + 2)
+                                        {
+                                            <span class="pagination-dots">...</span>
+                                        }
+                                    }
+                                </div>
+                                
+                                <MudButton Variant="Variant.Outlined" 
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           EndIcon="@Icons.Material.Filled.KeyboardArrowRight"
+                                           OnClick="NextPage"
+                                           Disabled="currentPage == totalPages || isSearching">
+                                    Next
+                                </MudButton>
+                            </div>
+                            
+                            <div class="text-caption">
+                                Page @currentPage of @totalPages (@searchResults.Count entries)
+                            </div>
+                        </div>
+                    </MudPaper>
+                </div>
+            }
+        </MudPaper>
+    }
+    else if (!isSearching)
+    {
+        <MudPaper Elevation="1" Class="pa-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Size="Size.Large" Class="mb-3" />
+            <h4>No entries found</h4>
+            <p class="text-muted">Try adjusting your search criteria or filters</p>
+        </MudPaper>
+    }
+</MudContainer>
+
+@code {
+    private MudForm? searchForm;
+    private SearchInputModel searchModel = new SearchInputModel();
+    private List<JournalEntryDisplayModel>? searchResults;
+    private List<Mood>? moods;
+    private List<Category>? categories;
+    private List<Tag>? tags;
+    private bool isSearching = false;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private int totalResults = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check PIN protection before loading content
+        await PinProtectionService.RequireAuthenticationAsync();
+        
+        await LoadFilterData();
+    }
+
+    private async Task LoadFilterData()
+    {
+        try
+        {
+            var moodsResult = await JournalService.GetMoodsAsync();
+            if (moodsResult.Success)
+            {
+                moods = moodsResult.Data ?? new List<Mood>();
+            }
+
+            // Load categories and tags
+            var entriesResult = await JournalService.GetEntriesAsync(DateTime.MinValue, DateTime.Today, 1, 1000);
+            if (entriesResult.Success && entriesResult.Data != null)
+            {
+                categories = entriesResult.Data
+                    .Where(e => e.Category != null)
+                    .Select(e => new Category 
+                    { 
+                        Id = e.Category!.Id, 
+                        Name = e.Category!.Name, 
+                        Description = e.Category!.Description,
+                        Color = e.Category!.Color
+                    })
+                    .DistinctBy(c => c.Id)
+                    .ToList();
+
+                tags = entriesResult.Data
+                    .SelectMany(e => e.Tags)
+                    .Select(t => new Tag { Id = t.Id, Name = t.Name, Color = t.Color })
+                    .DistinctBy(t => t.Id)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading filter data: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OnSearchKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await PerformSearch();
+        }
+    }
+
+    private async Task PerformSearch()
+    {
+        try
+        {
+            isSearching = true;
+            currentPage = 1;
+            searchModel.Page = currentPage;
+            
+            await InvokeAsync(StateHasChanged);
+
+            var result = await JournalService.SearchEntriesAsync(searchModel);
+
+            if (result.Success)
+            {
+                searchResults = result.Data.Entries;
+                totalResults = result.Data.TotalCount;
+                totalPages = (int)Math.Ceiling((double)totalResults / searchModel.PageSize);
+                
+                if (!searchResults.Any())
+                {
+                    Snackbar.Add("No entries found matching your criteria", Severity.Info);
+                }
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Search failed", Severity.Error);
+                searchResults = new List<JournalEntryDisplayModel>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error during search: {ex.Message}", Severity.Error);
+            searchResults = new List<JournalEntryDisplayModel>();
+        }
+        finally
+        {
+            isSearching = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ClearFilters()
+    {
+        searchModel = new SearchInputModel();
+        currentPage = 1;
+        searchResults = new List<JournalEntryDisplayModel>();
+        totalResults = 0;
+        totalPages = 1;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page < 1 || page > totalPages) return;
+        
+        currentPage = page;
+        searchModel.Page = currentPage;
+        await PerformSearch();
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            await GoToPage(currentPage + 1);
+        }
+    }
+
+    private async Task PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            await GoToPage(currentPage - 1);
+        }
+    }
+}
+
+<style>
+.entry-card {
+    border: 1px solid var(--mud-palette-grey-default);
+    background: var(--mud-palette-surface);
+}
+
+.entry-date {
+    font-weight: 600;
+    color: var(--mud-palette-primary);
+    font-size: 0.95rem;
+}
+
+.mood-display {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-primary);
+}
+
+.entry-content-preview {
+    color: var(--mud-palette-text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+    border-left: 3px solid var(--mud-palette-grey-light);
+    padding-left: 12px;
+    margin: 16px 0;
+}
+
+.word-count {
+    font-size: 0.85rem;
+    color: var(--mud-palette-text-disabled);
+    font-weight: 500;
+}
+
+.tag-chip {
+    display: inline-block;
+    padding: 4px 10px;
+    background-color: var(--mud-palette-grey-light);
+    color: var(--mud-palette-text-secondary);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--mud-palette-grey-default);
+    transition: all 0.2s ease;
+}
+
+.tag-chip:hover {
+    background-color: var(--mud-palette-primary);
+    color: white;
+    transform: scale(1.05);
+}
+
+.tag-chip.more-tags {
+    background-color: var(--mud-palette-secondary);
+    color: white;
+    border-color: var(--mud-palette-secondary);
+}
+
+.pagination-dots {
+    padding: 0 8px;
+    color: var(--mud-palette-text-secondary);
+    font-weight: 500;
+    align-self: center;
+}
+</style>

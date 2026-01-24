@@ -1,0 +1,354 @@
+@page "/calendar"
+@using MyJournal.Services
+@using MyJournal.Entities
+@using MyJournal.Models.Display
+@inject JournalService JournalService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PinProtectionService PinProtectionService
+
+<div class="text-center mb-4">
+    <h2>Calendar Navigation</h2>
+</div>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+    <MudPaper Elevation="2" Class="pa-4">
+        <!-- Month Navigation -->
+        <div class="d-flex justify-space-between align-center mb-4">
+            <MudButton Variant="Variant.Outlined" 
+                        Color="Color.Primary" 
+                        StartIcon="@Icons.Material.Filled.KeyboardArrowLeft"
+                        OnClick="PreviousMonth">
+                Previous
+            </MudButton>
+            
+            <h3 class="ma-0">@currentMonth.ToString("MMMM yyyy")</h3>
+            
+            <MudButton Variant="Variant.Outlined" 
+                        Color="Color.Primary" 
+                        EndIcon="@Icons.Material.Filled.KeyboardArrowRight"
+                        OnClick="NextMonth">
+                Next
+            </MudButton>
+        </div>
+
+        <!-- Calendar Grid -->
+        @if (isLoading)
+        {
+            <div class="text-center py-8">
+                <MudProgressCircular Indeterminate="true" />
+                <p class="mt-3">Loading calendar...</p>
+            </div>
+        }
+        else
+        {
+            <div class="calendar-grid">
+                <!-- Weekday Headers -->
+                <div class="calendar-weekdays">
+                    @foreach (var day in weekdayNames)
+                    {
+                        <div class="calendar-weekday">@day</div>
+                    }
+                </div>
+                
+                <!-- Calendar Days -->
+                <div class="calendar-days">
+                    @for (int i = 0; i < emptyDaysBeforeMonth; i++)
+                    {
+                        <div class="calendar-day empty"></div>
+                    }
+                    
+                    @for (int day = 1; day <= daysInMonth; day++)
+                    {
+                        var currentDate = new DateTime(currentMonth.Year, currentMonth.Month, day);
+                        var hasEntry = entriesWithDates.Contains(currentDate.Date);
+                        var isToday = currentDate.Date == DateTime.Today;
+                        var isSelected = selectedDate?.Date == currentDate.Date;
+                        
+                        <div class="calendar-day @(isToday ? "today" : "") @(isSelected ? "selected" : "") @(hasEntry ? "has-entry" : "")"
+                             @onclick="async () => await SelectDate(currentDate)">
+                            <span class="day-number">@day</span>
+                            @if (hasEntry)
+                            {
+                                <div class="entry-indicator">•</div>
+                            }
+                        </div>
+                    }
+                    
+                    @for (int i = 0; i < emptyDaysAfterMonth; i++)
+                    {
+                        <div class="calendar-day empty"></div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Selected Date Info -->
+        @if (selectedDate.HasValue)
+        {
+            <div class="mt-4">
+                <MudDivider Class="mb-3" />
+                <h4>Selected: @selectedDate.Value.ToString("MMMM dd, yyyy")</h4>
+                
+                @if (selectedEntry != null)
+                {
+                    <div class="selected-entry-info">
+                        <p><strong>Entry exists for this date</strong></p>
+                        <p>Word Count: @selectedEntry.WordCount</p>
+                        @if (selectedEntry.PrimaryMood != null)
+                        {
+                            <p>Mood: @selectedEntry.PrimaryMood.Icon @selectedEntry.PrimaryMood.Name</p>
+                        }
+                        <div class="mt-2">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary"
+                                       Href="@($"/view-entry?date={selectedDate.Value:yyyy-MM-dd}")">
+                                View Entry
+                            </MudButton>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="no-entry-info">
+                        <p>No entry exists for this date</p>
+                        <div class="mt-2">
+                            <MudButton Variant="Variant.Filled" 
+                                       Color="Color.Primary"
+                                       Href="@($"/journal?date={selectedDate.Value:yyyy-MM-dd}")">
+                                Create Entry
+                            </MudButton>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Legend -->
+        <div class="mt-4">
+            <MudDivider Class="mb-3" />
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-day has-entry">•</div>
+                    <span>Has Entry</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-day today">1</div>
+                    <span>Today</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-day selected">1</div>
+                    <span>Selected</span>
+                </div>
+            </div>
+        </div>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private DateTime currentMonth = DateTime.Today;
+    private DateTime? selectedDate;
+    private JournalEntryDisplayModel? selectedEntry;
+    private List<DateTime> entriesWithDates = new List<DateTime>();
+    private List<JournalEntryDisplayModel> allEntries = new List<JournalEntryDisplayModel>();
+    private bool isLoading = true;
+
+    private readonly string[] weekdayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check PIN protection before loading content
+        await PinProtectionService.RequireAuthenticationAsync();
+        
+        await LoadEntriesForMonth();
+    }
+
+    private int daysInMonth => DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month);
+    private int emptyDaysBeforeMonth => (int)new DateTime(currentMonth.Year, currentMonth.Month, 1).DayOfWeek;
+    private int emptyDaysAfterMonth => (7 - ((emptyDaysBeforeMonth + daysInMonth) % 7)) % 7;
+
+    private async Task LoadEntriesForMonth()
+    {
+        try
+        {
+            isLoading = true;
+            await InvokeAsync(StateHasChanged);
+
+            var result = await JournalService.GetEntriesByMonthAsync(currentMonth.Year, currentMonth.Month);
+
+            if (result.Success)
+            {
+                allEntries = result.Data ?? new List<JournalEntryDisplayModel>();
+                entriesWithDates = allEntries.Select(e => e.Date.Date).ToList();
+                
+                // Load selected entry if a date is selected
+                if (selectedDate.HasValue)
+                {
+                    selectedEntry = allEntries.FirstOrDefault(e => e.Date.Date == selectedDate.Value.Date);
+                }
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Failed to load entries", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading entries: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void PreviousMonth()
+    {
+        currentMonth = currentMonth.AddMonths(-1);
+        selectedDate = null;
+        selectedEntry = null;
+        _ = Task.Run(LoadEntriesForMonth);
+    }
+
+    private void NextMonth()
+    {
+        currentMonth = currentMonth.AddMonths(1);
+        selectedDate = null;
+        selectedEntry = null;
+        _ = Task.Run(LoadEntriesForMonth);
+    }
+
+    private async Task SelectDate(DateTime date)
+    {
+        selectedDate = date;
+        selectedEntry = allEntries.FirstOrDefault(e => e.Date.Date == date.Date);
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+<style>
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background-color: #e0e0e0;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.calendar-weekdays {
+    display: contents;
+}
+
+.calendar-weekday {
+    background-color: #f5f5f5;
+    padding: 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #666;
+}
+
+.calendar-days {
+    display: contents;
+}
+
+.calendar-day {
+    background-color: white;
+    min-height: 60px;
+    padding: 4px;
+    cursor: pointer;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+    background-color: #f8f9fa;
+}
+
+.calendar-day.empty {
+    background-color: #fafafa;
+    cursor: default;
+}
+
+.calendar-day.empty:hover {
+    background-color: #fafafa;
+}
+
+.calendar-day.today {
+    background-color: #e3f2fd;
+    border: 2px solid #2196f3;
+}
+
+.calendar-day.selected {
+    background-color: #e8f5e8;
+    border: 2px solid #4caf50;
+}
+
+.calendar-day.has-entry {
+    background-color: #fff3e0;
+}
+
+.day-number {
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.entry-indicator {
+    color: #ff9800;
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-top: 2px;
+}
+
+.selected-entry-info, .no-entry-info {
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.legend {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-day {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.legend-day.has-entry {
+    background-color: #fff3e0;
+    color: #ff9800;
+}
+
+.legend-day.today {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.legend-day.selected {
+    background-color: #e8f5e8;
+    border-color: #4caf50;
+}
+</style>

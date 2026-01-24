@@ -1,0 +1,432 @@
+@page "/edit-journal/{date}"
+@using MyJournal.Services
+@using MyJournal.Entities
+@using MyJournal.Common
+@using MyJournal.Models.Display
+@using MyJournal.Models.Input
+@inject JournalService JournalService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject PinProtectionService PinProtectionService
+
+<div class="text-center mb-4">
+    <h2>Edit Journal Entry</h2>
+</div>
+
+@if (isLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudProgressCircular Indeterminate="true" />
+            <p class="mt-3">Loading journal entry...</p>
+        </MudPaper>
+    </MudContainer>
+}
+else if (entry != null)
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-4">
+            <MudForm @ref="form" Model="@inputModel">
+                <div class="mb-4">
+                    <MudText Typo="Typo.h6" Class="mb-2">Write your journal entry</MudText>
+                    <div id="quill-editor" style="height: 300px; background-color: white; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <MudDatePicker Label="Date" 
+                                   Variant="Variant.Outlined"
+                                   Date="@inputModel.Date"
+                                   DateChanged="(DateTime? d) => { if (d.HasValue) inputModel.Date = d.Value; }" />
+                </div>
+                
+                <div class="mb-4">
+                    <MudSelect T="int" Label="Primary Mood" Variant="Variant.Outlined" @bind-Value="inputModel.PrimaryMoodId">
+                        @if (moods?.Any() == true)
+                        {
+                            @foreach (var mood in moods.Where(m => m.Category == MoodCategory.Positive))
+                            {
+                                <MudSelectItem T="int" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            }
+                            @foreach (var mood in moods.Where(m => m.Category == MoodCategory.Neutral))
+                            {
+                                <MudSelectItem T="int" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            }
+                            @foreach (var mood in moods.Where(m => m.Category == MoodCategory.Negative))
+                            {
+                                <MudSelectItem T="int" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            }
+                        }
+                    </MudSelect>
+                </div>
+
+                <div class="mb-4">
+                    <MudText Typo="Typo.subtitle1" Class="mb-2">Tags</MudText>
+                    
+                    @if (tags?.Any() == true)
+                    {
+                        <div class="mb-3">
+                            <MudText Typo="Typo.caption" Class="mb-2">Select existing tags:</MudText>
+                            <div class="tag-selection">
+                                @foreach (var tag in tags)
+                                {
+                                    var isSelected = inputModel.TagIds.Contains(tag.Id);
+                                    <MudChip @bind-Selected="@isSelected" 
+                                             T="bool"
+                                             Color="@GetTagColor(tag.Color)"
+                                             Variant="@Variant.Outlined"
+                                             Size="Size.Small"
+                                             Class="mr-1 mb-1"
+                                             OnClick="() => ToggleTag(tag.Id)">
+                                        #@tag.Name
+                                    </MudChip>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <MudText Typo="Typo.caption" Class="mb-2">Or add new tags (comma separated):</MudText>
+                        <MudTextField T="string" 
+                                      Label="New Tags" 
+                                      Variant="Variant.Outlined"
+                                      @bind-Value="newTagsInput"
+                                      Immediate="true"
+                                      Adornment="Adornment.End"
+                                      AdornmentIcon="@Icons.Material.Filled.Add"
+                                      OnAdornmentClick="AddNewTags"
+                                      HelperText="Enter tags separated by commas (e.g., work, family, health)" />
+                    </div>
+
+                    @if (inputModel.TagIds.Any() || inputModel.NewTagNames.Any())
+                    {
+                        <div class="selected-tags">
+                            <MudText Typo="Typo.caption" Class="mb-2">Selected tags:</MudText>
+                            <div class="d-flex flex-wrap gap-1">
+                                @foreach (var tagId in inputModel.TagIds)
+                                {
+                                    var tag = tags?.FirstOrDefault(t => t.Id == tagId);
+                                    if (tag != null)
+                                    {
+                                        <MudChip Color="@GetTagColor(tag.Color)" 
+                                                 T="bool"
+                                                 Variant="Variant.Filled"
+                                                 Size="Size.Small"
+                                                 OnClick="() => RemoveTag(tagId)">
+                                            #@tag.Name ×
+                                        </MudChip>
+                                    }
+                                }
+                                @foreach (var newTag in inputModel.NewTagNames)
+                                {
+                                    <MudChip Color="Color.Primary" 
+                                             T="bool"
+                                             Variant="Variant.Filled"
+                                             Size="Size.Small"
+                                             OnClick="() => RemoveNewTag(newTag)">
+                                        #@newTag ×
+                                    </MudChip>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary"
+                               OnClick="UpdateEntry"
+                               Disabled="isSaving">
+                        @if (isSaving)
+                        {
+                            <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                        }
+                        Update Entry
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Secondary"
+                               OnClick="Cancel"
+                               Disabled="isSaving">
+                        Cancel
+                    </MudButton>
+                </div>
+            </MudForm>
+        </MudPaper>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-3" />
+            <h4>Entry not found</h4>
+            <p class="text-muted">The journal entry you're trying to edit doesn't exist.</p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">
+                <MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-2" />
+                Back to Home
+            </MudButton>
+        </MudPaper>
+    </MudContainer>
+}
+
+@code {
+    [Parameter]
+    public string date { get; set; } = string.Empty;
+
+    private MudForm? form;
+    private JournalEntryDisplayModel? entry;
+    private JournalEntryInputModel inputModel = new JournalEntryInputModel();
+    private List<Mood>? moods = new();
+    private List<Tag>? tags = new();
+    private string newTagsInput = string.Empty;
+    private bool isSaving = false;
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check PIN protection before loading content
+        await PinProtectionService.RequireAuthenticationAsync();
+        
+        await LoadMoods();
+        await LoadTags();
+        await LoadEntry();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && entry != null)
+        {
+            await JSRuntime.InvokeVoidAsync("initQuillEditor", "quill-editor");
+            
+            // Populate the editor content after initialization
+            if (!string.IsNullOrEmpty(inputModel.Content))
+            {
+                await Task.Delay(100); // Small delay to ensure editor is ready
+                await JSRuntime.InvokeVoidAsync("setQuillHtml", "quill-editor", inputModel.Content);
+            }
+        }
+    }
+
+    private async Task LoadMoods()
+    {
+        try
+        {
+            var result = await JournalService.GetMoodsAsync();
+            if (result.Success)
+            {
+                moods = result.Data ?? new List<Mood>();
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Failed to load moods", Severity.Error);
+                moods = new List<Mood>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading moods: {ex.Message}", Severity.Error);
+            moods = new List<Mood>();
+        }
+    }
+
+    private async Task LoadTags()
+    {
+        try
+        {
+            var result = await JournalService.GetTagsAsync();
+            if (result.Success)
+            {
+                tags = result.Data ?? new List<Tag>();
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Failed to load tags", Severity.Error);
+                tags = new List<Tag>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading tags: {ex.Message}", Severity.Error);
+            tags = new List<Tag>();
+        }
+    }
+
+    private async Task LoadEntry()
+    {
+        try
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            if (DateTime.TryParse(date, out DateTime entryDate))
+            {
+                var result = await JournalService.GetEntryByDateAsync(entryDate);
+                
+                if (result.Success && result.Data != null)
+                {
+                    entry = result.Data;
+                    
+                    // Populate the input model with existing data
+                    inputModel.Date = entry.Date;
+                    inputModel.Content = entry.Content;
+                    inputModel.PrimaryMoodId = entry.PrimaryMood?.Id ?? 0;
+                    inputModel.CategoryId = entry.Category?.Id;
+                    
+                    // Populate existing tags
+                    inputModel.TagIds.Clear();
+                    foreach (var tag in entry.Tags)
+                    {
+                        inputModel.TagIds.Add(tag.Id);
+                    }
+                    
+                    // Populate secondary moods
+                    inputModel.SecondaryMoodIds.Clear();
+                    foreach (var mood in entry.SecondaryMoods)
+                    {
+                        inputModel.SecondaryMoodIds.Add(mood.Id);
+                    }
+                    
+                    await InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    Snackbar.Add(result.ErrorMessage ?? "Entry not found", Severity.Error);
+                    entry = null;
+                }
+            }
+            else
+            {
+                Snackbar.Add("Invalid date format", Severity.Error);
+                entry = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading entry: {ex.Message}", Severity.Error);
+            entry = null;
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task UpdateEntry()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            // Get content from Quill editor
+            var editorContent = await JSRuntime.InvokeAsync<string>("getQuillHtml", "quill-editor");
+            inputModel.Content = editorContent;
+
+            // Update the entry
+            var result = await JournalService.UpdateEntryAsync(entry!.Id, inputModel);
+
+            if (result.Success)
+            {
+                Snackbar.Add("Journal entry updated successfully!", Severity.Success);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Failed to update entry", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating entry: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void ToggleTag(int tagId)
+    {
+        if (inputModel.TagIds.Contains(tagId))
+        {
+            inputModel.TagIds.Remove(tagId);
+        }
+        else
+        {
+            inputModel.TagIds.Add(tagId);
+        }
+        StateHasChanged();
+    }
+
+    private void RemoveTag(int tagId)
+    {
+        inputModel.TagIds.Remove(tagId);
+        StateHasChanged();
+    }
+
+    private void RemoveNewTag(string tagName)
+    {
+        inputModel.NewTagNames.Remove(tagName);
+        StateHasChanged();
+    }
+
+    private void AddNewTags()
+    {
+        if (string.IsNullOrWhiteSpace(newTagsInput)) return;
+
+        var tagNames = newTagsInput.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                                 .Select(t => t.Trim())
+                                 .Where(t => !string.IsNullOrWhiteSpace(t))
+                                 .Distinct();
+
+        foreach (var tagName in tagNames)
+        {
+            var existingTag = tags?.FirstOrDefault(t => t.Name.Equals(tagName, StringComparison.OrdinalIgnoreCase));
+            
+            if (existingTag != null)
+            {
+                if (!inputModel.TagIds.Contains(existingTag.Id))
+                {
+                    inputModel.TagIds.Add(existingTag.Id);
+                }
+            }
+            else
+            {
+                if (!inputModel.NewTagNames.Contains(tagName, StringComparer.OrdinalIgnoreCase))
+                {
+                    inputModel.NewTagNames.Add(tagName);
+                }
+            }
+        }
+
+        newTagsInput = string.Empty;
+        StateHasChanged();
+    }
+
+    private Color GetTagColor(string? tagColor)
+    {
+        if (string.IsNullOrWhiteSpace(tagColor))
+            return Color.Default;
+
+        return tagColor.ToLower() switch
+        {
+            "#ff6b6b" or "red" => Color.Error,
+            "#4ecdc4" or "teal" => Color.Info,
+            "#45b7d1" or "blue" => Color.Primary,
+            "#96ceb4" or "green" => Color.Success,
+            "#feca57" or "yellow" => Color.Warning,
+            "#ff9ff3" or "pink" => Color.Secondary,
+            _ => Color.Default
+        };
+    }
+}

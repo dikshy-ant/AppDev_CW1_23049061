@@ -1,0 +1,513 @@
+@page "/settings"
+@using MyJournal.Services
+@using MyJournal.Entities
+@inject SettingsService SettingsService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="text-center mb-4">
+    <h2>Settings</h2>
+    <p class="text-muted">Customize your journal experience</p>
+</div>
+
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+    <!-- Theme Settings -->
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Palette" Class="mr-2" />
+            Theme Settings
+        </MudText>
+        
+        <MudRadioGroup @bind-Value="selectedTheme" T="string">
+            <MudRadio Value="@("Light")" Color="Color.Primary">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.LightMode" Color="Color.Warning" />
+                    <span>Light Theme</span>
+                </div>
+            </MudRadio>
+            
+            <MudRadio Value="@("Dark")" Color="Color.Primary">
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.DarkMode" Color="Color.Secondary" />
+                    <span>Dark Theme</span>
+                </div>
+            </MudRadio>
+        </MudRadioGroup>
+        
+        <MudText Typo="Typo.caption" Class="mt-2 text-muted">
+            Choose your preferred theme. Your selection will be saved automatically.
+        </MudText>
+    </MudPaper>
+
+    <!-- PIN Protection Settings -->
+    <MudPaper Elevation="2" Class="pa-4 mb-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Security" Class="mr-2" />
+            PIN Protection
+        </MudText>
+        
+        @if (isPinEnabled)
+        {
+            <MudAlert Severity="Severity.Info" Class="mb-3">
+                PIN protection is currently enabled. Journals will require PIN verification.
+            </MudAlert>
+            
+            <div class="d-flex gap-2">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Warning"
+                           StartIcon="@Icons.Material.Filled.LockOpen"
+                           OnClick="DisablePin"
+                           Disabled="isProcessing">
+                    Disable PIN
+                </MudButton>
+                
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Edit"
+                           OnClick="ShowChangePinDialog"
+                           Disabled="isProcessing">
+                    Change PIN
+                </MudButton>
+            </div>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Warning" Class="mb-3">
+                PIN protection is currently disabled. Your journals are not protected.
+            </MudAlert>
+            
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Lock"
+                       OnClick="ShowSetupPinForm"
+                       Disabled="isProcessing">
+                Enable PIN Protection
+            </MudButton>
+        }
+    </MudPaper>
+
+    @if (_showSetupPinForm)
+    {
+        <MudPaper Elevation="3" Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-3">
+                <MudIcon Icon="@Icons.Material.Filled.Lock" Class="mr-2" />
+                Setup PIN Protection
+            </MudText>
+            
+            <MudText Class="mb-4">Choose a 4-digit PIN to protect your journals</MudText>
+            
+            <MudForm @ref="_setupPinForm">
+                <MudTextField @bind-Value="_newPin"
+                             T="string"
+                             Label="Enter 4-digit PIN"
+                             Type="InputType.Password"
+                             MaxLength="4"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Normal"
+                             Immediate="true"
+                             Validation="@_pinValidation" />
+                
+                <MudTextField @bind-Value="_confirmPin"
+                             T="string"
+                             Label="Confirm PIN"
+                             Type="InputType.Password"
+                             MaxLength="4"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Normal"
+                             Immediate="true"
+                             Validation="@_confirmPinValidation" />
+            </MudForm>
+            
+            <div class="d-flex gap-2 mt-4">
+                <MudButton Variant="Variant.Outlined" 
+                           Color="Color.Secondary"
+                           OnClick="CancelPinSetup">
+                    Cancel
+                </MudButton>
+                
+                <MudButton Variant="Variant.Filled" 
+                           Color="Color.Primary"
+                           OnClick="SetupPin"
+                           Disabled="isProcessing">
+                    @if (isProcessing)
+                    {
+                        <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                    }
+                    Setup PIN
+                </MudButton>
+            </div>
+        </MudPaper>
+    }
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-space-between mt-4">
+        <MudButton Variant="Variant.Outlined" 
+                   Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   OnClick="GoToHome">
+            Back to Home
+        </MudButton>
+        
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.Save"
+                   OnClick="SaveSettings"
+                   Disabled="isSaving">
+            @if (isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Class="mr-2" />
+            }
+            Save Settings
+        </MudButton>
+    </div>
+</MudContainer>
+
+<!-- Setup PIN Dialog -->
+<MudDialog @bind-IsOpen="_showSetupPinDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Setup PIN Protection</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Class="mb-4">Choose a 4-digit PIN to protect your journals</MudText>
+        
+        <MudForm @ref="_setupPinForm">
+            <MudTextField @bind-Value="_newPin"
+                         T="string"
+                         Label="Enter 4-digit PIN"
+                         Type="InputType.Password"
+                         MaxLength="4"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Normal"
+                         Immediate="true"
+                         Validation="@_pinValidation" />
+            
+            <MudTextField @bind-Value="_confirmPin"
+                         T="string"
+                         Label="Confirm PIN"
+                         Type="InputType.Password"
+                         MaxLength="4"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Normal"
+                         Immediate="true"
+                         Validation="@_confirmPinValidation" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _showSetupPinDialog = false">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="SetupPin" Disabled="isProcessing">
+            Setup PIN
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+<!-- Change PIN Dialog -->
+<MudDialog @bind-IsOpen="_showChangePinDialog">
+    <TitleContent>
+        <MudText Typo="Typo.h6">Change PIN</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Class="mb-4">Enter your current PIN and choose a new one</MudText>
+        
+        <MudForm @ref="_changePinForm">
+            <MudTextField @bind-Value="_currentPin"
+                         T="string"
+                         Label="Current PIN"
+                         Type="InputType.Password"
+                         MaxLength="4"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Normal"
+                         Immediate="true"
+                         Validation="@_pinValidation" />
+            
+            <MudTextField @bind-Value="_newPin"
+                         T="string"
+                         Label="New PIN"
+                         Type="InputType.Password"
+                         MaxLength="4"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Normal"
+                         Immediate="true"
+                         Validation="@_pinValidation" />
+            
+            <MudTextField @bind-Value="_confirmPin"
+                         T="string"
+                         Label="Confirm New PIN"
+                         Type="InputType.Password"
+                         MaxLength="4"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Normal"
+                         Immediate="true"
+                         Validation="@_confirmPinValidation" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="() => _showChangePinDialog = false">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="ChangePin" Disabled="isProcessing">
+            Change PIN
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    private string selectedTheme = "Light";
+    private bool isSaving = false;
+    private bool isProcessing = false;
+    private bool isPinEnabled = false;
+    
+    // PIN dialog state
+    private bool _showSetupPinDialog = false;
+    private bool _showChangePinDialog = false;
+    private bool _showSetupPinForm = false;
+    private MudForm _setupPinForm = null!;
+    private MudForm _changePinForm = null!;
+    
+    // PIN fields
+    private string _currentPin = string.Empty;
+    private string _newPin = string.Empty;
+    private string _confirmPin = string.Empty;
+
+    // PIN validation
+    private Func<string, string> _pinValidation = value =>
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "PIN is required";
+        if (value.Length != 4)
+            return "PIN must be 4 digits";
+        if (!int.TryParse(value, out _))
+            return "PIN must contain only numbers";
+        return null!;
+    };
+
+    private Func<string, string> _confirmPinValidation = value =>
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "PIN confirmation is required";
+        if (value.Length != 4)
+            return "PIN must be 4 digits";
+        if (!int.TryParse(value, out _))
+            return "PIN must contain only numbers";
+        return null!;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSettings();
+    }
+
+    private async Task LoadSettings()
+    {
+        try
+        {
+            var settings = await SettingsService.GetUserSettingsAsync();
+            selectedTheme = settings.Theme ?? "Light";
+            isPinEnabled = settings.IsPinEnabled && !string.IsNullOrEmpty(settings.PinHash);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading settings: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            // Save theme preference
+            await SettingsService.UpdateThemeAsync(selectedTheme);
+
+            // Apply theme change using JavaScript
+            await ApplyThemeChange(selectedTheme);
+
+            Snackbar.Add("Settings saved successfully! Please refresh the page to see the theme change.", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error saving settings: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ApplyThemeChange(string theme)
+    {
+        // Use JavaScript to apply theme change and refresh page
+        await JSRuntime.InvokeVoidAsync("themeManager.applyTheme", theme);
+    }
+
+    private void GoToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    // PIN Management Methods
+    private void ShowSetupPinForm()
+    {
+        _newPin = string.Empty;
+        _confirmPin = string.Empty;
+        _showSetupPinForm = true;
+        StateHasChanged();
+    }
+
+    private void CancelPinSetup()
+    {
+        _showSetupPinForm = false;
+        StateHasChanged();
+    }
+
+    private void ShowSetupPinDialog()
+    {
+        _newPin = string.Empty;
+        _confirmPin = string.Empty;
+        _showSetupPinDialog = true;
+        StateHasChanged();
+    }
+
+    private void ShowChangePinDialog()
+    {
+        _currentPin = string.Empty;
+        _newPin = string.Empty;
+        _confirmPin = string.Empty;
+        _showChangePinDialog = true;
+        StateHasChanged();
+    }
+
+    private async Task SetupPin()
+    {
+        await _setupPinForm.Validate();
+        if (!_setupPinForm.IsValid)
+            return;
+
+        // Check if PINs match
+        if (_newPin != _confirmPin)
+        {
+            Snackbar.Add("PINs do not match.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+
+            var hashedPin = HashPin(_newPin);
+            var success = await SettingsService.UpdatePinSettingsAsync(true, hashedPin);
+            
+            if (success)
+            {
+                isPinEnabled = true;
+                _showSetupPinForm = false; 
+                Snackbar.Add("PIN protection enabled successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to enable PIN protection.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error setting up PIN: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ChangePin()
+    {
+        await _changePinForm.Validate();
+        if (!_changePinForm.IsValid)
+            return;
+
+        // Check if PINs match
+        if (_newPin != _confirmPin)
+        {
+            Snackbar.Add("PINs do not match.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+
+            // Verify current PIN
+            var isCurrentPinValid = await SettingsService.VerifyPinAsync(_currentPin);
+            if (!isCurrentPinValid)
+            {
+                Snackbar.Add("Current PIN is incorrect.", Severity.Error);
+                return;
+            }
+
+            // Update to new PIN
+            var hashedPin = HashPin(_newPin);
+            var success = await SettingsService.UpdatePinSettingsAsync(true, hashedPin);
+            
+            if (success)
+            {
+                _showChangePinDialog = false;
+                Snackbar.Add("PIN changed successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("Failed to change PIN.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error changing PIN: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DisablePin()
+    {
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+
+            var success = await SettingsService.UpdatePinSettingsAsync(false, null);
+            
+            if (success)
+            {
+                isPinEnabled = false;
+                Snackbar.Add("PIN protection disabled.", Severity.Info);
+            }
+            else
+            {
+                Snackbar.Add("Failed to disable PIN protection.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error disabling PIN: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private string HashPin(string pin)
+    {
+        using (var sha256 = System.Security.Cryptography.SHA256.Create())
+        {
+            var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(pin + "journal_salt"));
+            return Convert.ToBase64String(hashedBytes);
+        }
+    }
+}

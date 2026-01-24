@@ -1,0 +1,161 @@
+@page "/pin-verify"
+@using MyJournal.Services
+@using MyJournal.Entities
+@inject SettingsService SettingsService
+@inject PinProtectionService PinProtectionService
+@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+
+<MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
+    <MudPaper Elevation="8" Class="pa-6 text-center">
+        <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Class="mb-4" />
+        
+        <MudText Typo="Typo.h4" Class="mb-2">
+            PIN Protection
+        </MudText>
+        
+        <MudText Typo="Typo.body1" Class="mb-6 text-muted">
+            Enter your PIN to access your journals
+        </MudText>
+
+        <MudForm @ref="_form" Class="mt-4">
+            <MudTextField @bind-Value="_pin"
+                         T="string"
+                         Label="Enter PIN"
+                         Type="InputType.Password"
+                         MaxLength="4"
+                         Variant="Variant.Outlined"
+                         Margin="Margin.Normal"
+                         Immediate="true"
+                         Validation="@_pinValidation"
+                         Adornment="Adornment.End"
+                         AdornmentIcon="@Icons.Material.Filled.Visibility"
+                         OnAdornmentClick="TogglePasswordVisibility"
+                         AdornmentAriaLabel="Toggle PIN visibility" />
+            
+            <div class="mt-6">
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Size="Size.Large"
+                           FullWidth="true"
+                           OnClick="VerifyPin"
+                           Disabled="isVerifying">
+                    @if (isVerifying)
+                    {
+                        <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                    }
+                    Unlock Journals
+                </MudButton>
+            </div>
+        </MudForm>
+
+        @if (showError)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">
+                Incorrect PIN. Please try again.
+            </MudAlert>
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private MudForm _form = null!;
+    private string _pin = string.Empty;
+    private bool isVerifying = false;
+    private bool showError = false;
+    private bool _isPasswordVisible = false;
+
+    [Inject] private IJSRuntime JSRuntime { get; set; } = null!;
+
+    private Func<string, string> _pinValidation = value =>
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "PIN is required";
+        if (value.Length != 4)
+            return "PIN must be 4 digits";
+        if (!int.TryParse(value, out _))
+            return "PIN must contain only numbers";
+        return null!;
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if PIN is actually enabled
+        var isPinEnabled = await SettingsService.IsPinEnabledAsync();
+        if (!isPinEnabled)
+        {
+            // If PIN is not enabled, redirect to home
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+        
+        // Check if user is already authenticated
+        var isAuthenticated = await PinProtectionService.IsAuthenticatedAsync();
+        if (isAuthenticated)
+        {
+            // If already authenticated, redirect to home
+            NavigationManager.NavigateTo("/");
+        }
+    }
+
+    private async Task VerifyPin()
+    {
+        await _form.Validate();
+        if (!_form.IsValid)
+            return;
+
+        isVerifying = true;
+        showError = false;
+        StateHasChanged();
+
+        try
+        {
+            // Debug: Show what PIN we're trying to verify
+            Snackbar.Add($"Verifying PIN: {_pin}", Severity.Info);
+            
+            var isValidPin = await SettingsService.VerifyPinAsync(_pin);
+            
+            // Debug: Show verification result
+            Snackbar.Add($"PIN verification result: {isValidPin}", Severity.Info);
+            
+            if (isValidPin)
+            {
+                // Store authentication state
+                await PinProtectionService.SetAuthenticatedStateAsync(true);
+                
+                // Wait a moment to ensure the state is stored
+                await Task.Delay(500);
+                
+                Snackbar.Add("PIN verified successfully! Redirecting...", Severity.Success);
+                
+                // Wait a moment before redirecting to show the success message
+                await Task.Delay(1000);
+                
+                // Redirect to the originally requested page or home
+                var returnUrl = NavigationManager.Uri.Contains("pin-verify") ? "/" : NavigationManager.Uri;
+                NavigationManager.NavigateTo(returnUrl);
+            }
+            else
+            {
+                showError = true;
+                Snackbar.Add("Incorrect PIN. Please try again.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error verifying PIN: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isVerifying = false;
+            StateHasChanged();
+        }
+    }
+
+    private void TogglePasswordVisibility()
+    {
+        _isPasswordVisible = !_isPasswordVisible;
+        // Note: In a real implementation, you'd need to handle the password visibility toggle
+        // This is a simplified version for demonstration
+    }
+}

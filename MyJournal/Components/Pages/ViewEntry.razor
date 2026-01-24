@@ -1,0 +1,483 @@
+@page "/view-entry/{id:int}"
+@page "/view-entry"
+@using MyJournal.Services
+@using MyJournal.Entities
+@using MyJournal.Models.Display
+@inject JournalService JournalService
+@inject ExportService ExportService
+@inject NavigationManager NavigationManager
+@inject ISnackbar Snackbar
+@inject PinProtectionService PinProtectionService
+@inject IJSRuntime JSRuntime
+@inject IDialogService DialogService
+
+<div class="text-center mb-4">
+    <h2>Journal Entry</h2>
+</div>
+
+@if (isLoading)
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudProgressCircular Indeterminate="true" />
+            <p class="mt-3">Loading journal entry...</p>
+        </MudPaper>
+    </MudContainer>
+}
+else if (entry != null)
+{
+    <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-4">
+            <!-- Entry Header -->
+            <div class="d-flex justify-space-between align-center mb-4">
+                <div>
+                    <h3 class="ma-0">@entry.FormattedDate</h3>
+                    <p class="text-muted ma-0">
+                        Created: @entry.CreatedAt.ToString("g") 
+                        @if (entry.WasEdited)
+                        {
+                            <span>• Edited: @entry.UpdatedAt.ToString("g")</span>
+                        }
+                    </p>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Edit"
+                               Href="@($"/edit-journal/{entry.Date:yyyy-MM-dd}")">
+                        Edit
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Tertiary"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               OnClick="ExportSingleEntry"
+                               Disabled="isExporting">
+                        @if (isExporting)
+                        {
+                            <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                        }
+                        Export
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Outlined" 
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.ArrowBack"
+                               OnClick="GoBack">
+                        Back
+                    </MudButton>
+                </div>
+            </div>
+
+            <MudDivider Class="mb-4" />
+
+            <!-- Mood and Tags -->
+            <div class="mb-4">
+                @if (entry.PrimaryMood != null)
+                {
+                    <div class="mb-2">
+                        <span class="chip chip-@GetMoodColorClass(entry.PrimaryMood.Category) chip-filled">
+                            @entry.PrimaryMood.Icon @entry.PrimaryMood.Name
+                        </span>
+                    </div>
+                }
+
+                @if (entry.SecondaryMoods.Any())
+                {
+                    <div class="mb-2">
+                        <span class="text-caption">Secondary moods: </span>
+                        @foreach (var mood in entry.SecondaryMoods)
+                        {
+                            <span class="chip chip-@GetMoodColorClass(mood.Category) chip-outlined mr-1">
+                                @mood.Icon @mood.Name
+                            </span>
+                        }
+                    </div>
+                }
+
+                @if (entry.Tags.Any())
+                {
+                    <div class="mb-2">
+                        <span class="text-caption">Tags: </span>
+                        @foreach (var tag in entry.Tags)
+                        {
+                            <span class="chip chip-secondary chip-outlined mr-1">
+                                #@tag.Name
+                            </span>
+                        }
+                    </div>
+                }
+
+                @if (entry.Category != null)
+                {
+                    <div class="mb-2">
+                        <span class="text-caption">Category: </span>
+                        <span class="chip chip-primary chip-outlined">
+                            @entry.Category.Name
+                        </span>
+                    </div>
+                }
+
+                <div class="mt-2">
+                    <span class="text-caption">@entry.WordCount words</span>
+                </div>
+            </div>
+
+            <MudDivider Class="mb-4" />
+
+            <!-- Entry Content -->
+            <div class="entry-content">
+                <div class="content-html" @ref="contentContainer">
+                    @((MarkupString)entry.Content)
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-4 d-flex justify-space-between">
+                <div>
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.CalendarToday"
+                               Href="/calendar">
+                        View Calendar
+                    </MudButton>
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Tertiary"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               OnClick="ExportSingleEntry"
+                               Disabled="isExporting">
+                        @if (isExporting)
+                        {
+                            <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                        }
+                        Export PDF
+                    </MudButton>
+                    
+                    <MudButton Variant="Variant.Text" 
+                               Color="Color.Secondary"
+                               StartIcon="@Icons.Material.Filled.Delete"
+                               OnClick="ShowDeleteDialog">
+                        Delete Entry
+                    </MudButton>
+                </div>
+            </div>
+        </MudPaper>
+    </MudContainer>
+}
+else
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="mt-4">
+        <MudPaper Elevation="2" Class="pa-6 text-center">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Class="mb-3" />
+            <h4>Entry not found</h4>
+            <p class="text-muted">The journal entry you're looking for doesn't exist.</p>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">
+                <MudIcon Icon="@Icons.Material.Filled.Home" Class="mr-2" />
+                Back to Home
+            </MudButton>
+        </MudPaper>
+    </MudContainer>
+}
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    [SupplyParameterFromQuery(Name = "date")]
+    public string? Date { get; set; }
+
+    private JournalEntryDisplayModel? entry;
+    private bool isLoading = true;
+    private bool isExporting = false;
+    private ElementReference contentContainer;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Check PIN protection before loading content
+        await PinProtectionService.RequireAuthenticationAsync();
+        
+        await LoadEntry();
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private async Task LoadEntry()
+    {
+        try
+        {
+            isLoading = true;
+            await InvokeAsync(StateHasChanged);
+
+            if (Id.HasValue)
+            {
+                // Load by ID
+                var result = await JournalService.GetEntryByIdAsync(Id.Value);
+                if (result.Success)
+                {
+                    entry = result.Data;
+                }
+                else
+                {
+                    Snackbar.Add(result.ErrorMessage ?? "Failed to load entry", Severity.Error);
+                }
+            }
+            else if (!string.IsNullOrEmpty(Date))
+            {
+                if (DateTime.TryParse(Date, out DateTime date))
+                {
+                    var result = await JournalService.GetEntryByDateAsync(date);
+                    if (result.Success)
+                    {
+                        entry = result.Data;
+                    }
+                    else
+                    {
+                        Snackbar.Add(result.ErrorMessage ?? "Failed to load entry", Severity.Error);
+                    }
+                }
+                else
+                {
+                    Snackbar.Add("Invalid date format", Severity.Error);
+                }
+            }
+            else
+            {
+                Snackbar.Add("No entry specified", Severity.Warning);
+                NavigationManager.NavigateTo("/");
+                return;
+            }
+
+            // If no entry found, redirect to home after a delay
+            if (entry == null)
+            {
+                await Task.Delay(2000);
+                NavigationManager.NavigateTo("/");
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error loading entry: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ExportSingleEntry()
+    {
+        if (entry == null) return;
+
+        try
+        {
+            isExporting = true;
+            StateHasChanged();
+
+            // Export just this single entry
+            var pdfBytes = await ExportService.ExportToPdfAsync(entry.Date, entry.Date);
+
+            // Create filename
+            var fileName = $"JournalEntry_{entry.Date:yyyyMMdd}.pdf";
+
+            // Download the file
+            await DownloadFile(fileName, pdfBytes);
+
+            Snackbar.Add("Entry exported successfully!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error exporting entry: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadFile(string fileName, byte[] fileBytes)
+    {
+        // Create a data URL for the file
+        var mimeType = "application/pdf";
+        var dataUrl = $"data:{mimeType};base64,{Convert.ToBase64String(fileBytes)}";
+
+        // Use JavaScript to trigger download
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, dataUrl);
+    }
+
+    private async Task ShowDeleteDialog()
+    {
+        if (entry == null) return;
+        
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to delete this journal entry? This action cannot be undone.");
+        
+        if (confirmed)
+        {
+            await ConfirmDelete();
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (entry == null) return;
+
+        try
+        {
+            var result = await JournalService.DeleteEntryAsync(entry.Id);
+            if (result.Success)
+            {
+                Snackbar.Add("Entry deleted successfully", Severity.Success);
+                await Task.Delay(1000);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                Snackbar.Add(result.ErrorMessage ?? "Failed to delete entry", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error deleting entry: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private Color GetMoodColor(MoodCategory category) => category switch
+    {
+        MoodCategory.Positive => Color.Success,
+        MoodCategory.Neutral => Color.Warning,
+        MoodCategory.Negative => Color.Error,
+        _ => Color.Default
+    };
+
+    private string GetMoodColorClass(MoodCategory category) => category switch
+    {
+        MoodCategory.Positive => "success",
+        MoodCategory.Neutral => "warning", 
+        MoodCategory.Negative => "error",
+        _ => "default"
+    };
+}
+
+<style>
+.chip {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin: 2px;
+}
+
+.chip-outlined {
+    background-color: transparent;
+    border: 1px solid currentColor;
+}
+
+.chip-filled {
+    background-color: currentColor;
+    color: white;
+}
+
+.chip-primary {
+    color: var(--mud-palette-primary);
+}
+
+.chip-secondary {
+    color: var(--mud-palette-secondary);
+}
+
+.chip-success {
+    color: var(--mud-palette-success);
+}
+
+.chip-warning {
+    color: var(--mud-palette-warning);
+}
+
+.chip-error {
+    color: var(--mud-palette-error);
+}
+
+.chip-default {
+    color: var(--mud-palette-text-primary);
+}
+
+.entry-content {
+    min-height: 200px;
+    line-height: 1.6;
+}
+
+.content-html {
+    font-size: 1rem;
+    color: var(--mud-palette-text-primary);
+}
+
+.content-html h1,
+.content-html h2,
+.content-html h3,
+.content-html h4,
+.content-html h5,
+.content-html h6 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.content-html p {
+    margin-bottom: 1rem;
+}
+
+.content-html ul,
+.content-html ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.content-html blockquote {
+    border-left: 4px solid var(--mud-palette-primary);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    font-style: italic;
+    color: var(--mud-palette-text-secondary);
+}
+
+.content-html a {
+    color: var(--mud-palette-primary);
+    text-decoration: underline;
+}
+
+.content-html code {
+    background-color: var(--mud-palette-grey-light);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.content-html pre {
+    background-color: var(--mud-palette-grey-light);
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+</style>
+
+<script>
+    function downloadFile(fileName, dataUrl) {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
