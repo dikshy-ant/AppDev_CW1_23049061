@@ -1,0 +1,204 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyJournal.Entities.Category" Collapsed="true">
+    <Position X="11.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAgAAAAAAAAAAUAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Entities\Category.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.JournalEntry" Collapsed="true">
+    <Position X="6.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAgAAigAAACAAAAAAAAgAAEABAAAAAAAACAA=</HashCode>
+      <FileName>Entities\JournalEntry.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.JournalEntryMood" Collapsed="true">
+    <Position X="8" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAAAAAAAIAAAAAAAAAEAAAAAAAAAg=</HashCode>
+      <FileName>Entities\JournalEntryMood.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.JournalEntryTag" Collapsed="true">
+    <Position X="1" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAAAAAAAAIAAAAAAAAAEAAAAAAAAAE=</HashCode>
+      <FileName>Entities\JournalEntryTag.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.Mood" Collapsed="true">
+    <Position X="4.5" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAgAEACAA=</HashCode>
+      <FileName>Entities\Mood.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.StreakTracking" Collapsed="true">
+    <Position X="6.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAgBAAAAAAAAABAQAAAAAAAAA=</HashCode>
+      <FileName>Entities\StreakTracking.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.Tag" Collapsed="true">
+    <Position X="8" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACCAAAAAAAAAAAAAAAAAUAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Entities\Tag.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Entities.UserSettings" Collapsed="true">
+    <Position X="2.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACKAAAAAAAAAAAQAAAAAAAAAAAAAAAAAABAAAAAAAI=</HashCode>
+      <FileName>Entities\UserSettings.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.ExportService" Collapsed="true">
+    <Position X="4.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAABAAAABAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\ExportService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.JournalService" Collapsed="true">
+    <Position X="2.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAIAAgAAgAABIAAAAAAAAQAUAAAAA0CAAAABCYACAA=</HashCode>
+      <FileName>Services\JournalService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.PinProtectionService" Collapsed="true">
+    <Position X="6.25" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAAACAAAAEEAAAAAQAgAAAAAAAAAAAAQAIAAAAA=</HashCode>
+      <FileName>Services\PinProtectionService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.SettingsService" Collapsed="true">
+    <Position X="8" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAEAAAAhACBAAAAAAAAAACAAAAAACAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\SettingsService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.StreakService" Collapsed="true">
+    <Position X="2.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAACAAAAABCAAAAAAEAAAAAAIAAAAAAAAAAAACAE=</HashCode>
+      <FileName>Services\StreakService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.StreakStatistics" Collapsed="true">
+    <Position X="4.5" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgEAAAAAAAABAACAAgAEABAQAAAAAAAAA=</HashCode>
+      <FileName>Services\StreakService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.StreakDay" Collapsed="true">
+    <Position X="1" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAIAAAAAAAAAAAAAEAAAAAABAAAAAAAAAAA=</HashCode>
+      <FileName>Services\StreakService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Services.ThemeService" Collapsed="true">
+    <Position X="1" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAACAgCAAABAAAAAACAAAAIAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Services\ThemeService.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Data.AppDbContext" Collapsed="true">
+    <Position X="1.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>QAAAAAAAAQAQAAAAAAAAAAEAEAAAEsFAAAAAAAAAAAA=</HashCode>
+      <FileName>Data\AppDbContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.AnalyticsDisplayModel" Collapsed="true">
+    <Position X="4.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAECAAANAOAAAAAgEAhAAAAAAAZAQgIAEAAAAA=</HashCode>
+      <FileName>Models\Display\AnalyticsDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.MoodFrequencyDisplayModel" Collapsed="true">
+    <Position X="8.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAgAAAAAAAAAAAEACAA=</HashCode>
+      <FileName>Models\Display\AnalyticsDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.TagFrequencyDisplayModel" Collapsed="true">
+    <Position X="4.75" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAQAAAgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Display\AnalyticsDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.CategoryBreakdownDisplayModel" Collapsed="true">
+    <Position X="6.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAAAAAAAAAACgAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Display\AnalyticsDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.WordCountTrendDisplayModel" Collapsed="true">
+    <Position X="6.5" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAEAAAAAAAgAAAAAAAAAAAAAAAAABAAAABAAAAAA=</HashCode>
+      <FileName>Models\Display\AnalyticsDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.JournalEntryDisplayModel" Collapsed="true">
+    <Position X="11.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAEAAAgAAigAQACAAABAAEAAQAEABAAAABAAACAA=</HashCode>
+      <FileName>Models\Display\JournalEntryDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.MoodDisplayModel" Collapsed="true">
+    <Position X="10" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAEAAAAAQAAAAAAAAAAAAAgAEACAA=</HashCode>
+      <FileName>Models\Display\JournalEntryDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.CategoryDisplayModel" Collapsed="true">
+    <Position X="10" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAgAAAAAAAAAAQAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Models\Display\JournalEntryDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Models.Display.TagDisplayModel" Collapsed="true">
+    <Position X="11.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACCAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAgAAAAAA=</HashCode>
+      <FileName>Models\Display\JournalEntryDisplayModel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyJournal.Common.ServiceResult&lt;T&gt;" Collapsed="true">
+    <Position X="10" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAAAAAAAAAAAAAAgAAgAAABAAAAABAAAAAAA=</HashCode>
+      <FileName>Common\ServiceResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="System.Object" Collapsed="true">
+    <Position X="14.25" Y="1.25" Width="1.5" />
+    <TypeIdentifier />
+  </Class>
+  <Enum Name="MyJournal.Entities.MoodCategory" Collapsed="true">
+    <Position X="1" Y="4.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAACAAAA=</HashCode>
+      <FileName>Entities\Mood.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>
