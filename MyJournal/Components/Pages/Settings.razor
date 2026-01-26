@@ -61,14 +61,6 @@
                            Disabled="isProcessing">
                     Disable PIN
                 </MudButton>
-                
-                <MudButton Variant="Variant.Outlined" 
-                           Color="Color.Primary"
-                           StartIcon="@Icons.Material.Filled.Edit"
-                           OnClick="ShowChangePinDialog"
-                           Disabled="isProcessing">
-                    Change PIN
-                </MudButton>
             </div>
         }
         else
@@ -201,54 +193,6 @@
     </DialogActions>
 </MudDialog>
 
-<!-- Change PIN Dialog -->
-<MudDialog @bind-IsOpen="_showChangePinDialog">
-    <TitleContent>
-        <MudText Typo="Typo.h6">Change PIN</MudText>
-    </TitleContent>
-    <DialogContent>
-        <MudText Class="mb-4">Enter your current PIN and choose a new one</MudText>
-        
-        <MudForm @ref="_changePinForm">
-            <MudTextField @bind-Value="_currentPin"
-                         T="string"
-                         Label="Current PIN"
-                         Type="InputType.Password"
-                         MaxLength="4"
-                         Variant="Variant.Outlined"
-                         Margin="Margin.Normal"
-                         Immediate="true"
-                         Validation="@_pinValidation" />
-            
-            <MudTextField @bind-Value="_newPin"
-                         T="string"
-                         Label="New PIN"
-                         Type="InputType.Password"
-                         MaxLength="4"
-                         Variant="Variant.Outlined"
-                         Margin="Margin.Normal"
-                         Immediate="true"
-                         Validation="@_pinValidation" />
-            
-            <MudTextField @bind-Value="_confirmPin"
-                         T="string"
-                         Label="Confirm New PIN"
-                         Type="InputType.Password"
-                         MaxLength="4"
-                         Variant="Variant.Outlined"
-                         Margin="Margin.Normal"
-                         Immediate="true"
-                         Validation="@_confirmPinValidation" />
-        </MudForm>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="() => _showChangePinDialog = false">Cancel</MudButton>
-        <MudButton Color="Color.Primary" OnClick="ChangePin" Disabled="isProcessing">
-            Change PIN
-        </MudButton>
-    </DialogActions>
-</MudDialog>
-
 @code {
     private string selectedTheme = "Light";
     private bool isSaving = false;
@@ -257,13 +201,10 @@
     
     // PIN dialog state
     private bool _showSetupPinDialog = false;
-    private bool _showChangePinDialog = false;
     private bool _showSetupPinForm = false;
     private MudForm _setupPinForm = null!;
-    private MudForm _changePinForm = null!;
     
     // PIN fields
-    private string _currentPin = string.Empty;
     private string _newPin = string.Empty;
     private string _confirmPin = string.Empty;
 
@@ -355,12 +296,6 @@
         StateHasChanged();
     }
 
-    private void CancelPinSetup()
-    {
-        _showSetupPinForm = false;
-        StateHasChanged();
-    }
-
     private void ShowSetupPinDialog()
     {
         _newPin = string.Empty;
@@ -369,12 +304,9 @@
         StateHasChanged();
     }
 
-    private void ShowChangePinDialog()
+    private void CancelPinSetup()
     {
-        _currentPin = string.Empty;
-        _newPin = string.Empty;
-        _confirmPin = string.Empty;
-        _showChangePinDialog = true;
+        _showSetupPinForm = false;
         StateHasChanged();
     }
 
@@ -413,57 +345,6 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Error setting up PIN: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            isProcessing = false;
-            StateHasChanged();
-        }
-    }
-
-    private async Task ChangePin()
-    {
-        await _changePinForm.Validate();
-        if (!_changePinForm.IsValid)
-            return;
-
-        // Check if PINs match
-        if (_newPin != _confirmPin)
-        {
-            Snackbar.Add("PINs do not match.", Severity.Error);
-            return;
-        }
-
-        try
-        {
-            isProcessing = true;
-            StateHasChanged();
-
-            // Verify current PIN
-            var isCurrentPinValid = await SettingsService.VerifyPinAsync(_currentPin);
-            if (!isCurrentPinValid)
-            {
-                Snackbar.Add("Current PIN is incorrect.", Severity.Error);
-                return;
-            }
-
-            // Update to new PIN
-            var hashedPin = HashPin(_newPin);
-            var success = await SettingsService.UpdatePinSettingsAsync(true, hashedPin);
-            
-            if (success)
-            {
-                _showChangePinDialog = false;
-                Snackbar.Add("PIN changed successfully!", Severity.Success);
-            }
-            else
-            {
-                Snackbar.Add("Failed to change PIN.", Severity.Error);
-            }
-        }
-        catch (Exception ex)
-        {
-            Snackbar.Add($"Error changing PIN: {ex.Message}", Severity.Error);
         }
         finally
         {

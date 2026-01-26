@@ -21,7 +21,9 @@
                               Label="Title" 
                               Variant="Variant.Outlined"
                               @bind-Value="inputModel.Title"
-                              Immediate="true" />
+                              Immediate="true"
+                              Typo="Typo.h6"
+                              Class="title-field" />
             </div>
             
             <div class="mb-4">
@@ -165,6 +167,12 @@
         await LoadMoods();
         await LoadTags();
         inputModel.Date = DateTime.Today;
+        
+        // Set a default mood if available to prevent foreign key constraint issues
+        if (moods?.Any() == true)
+        {
+            inputModel.PrimaryMoodId = moods.First().Id;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -309,6 +317,20 @@
             isSaving = true;
             StateHasChanged();
 
+            // Validate form
+            if (form?.IsValid != true)
+            {
+                Snackbar.Add("Please fill in all required fields", Severity.Warning);
+                return;
+            }
+
+            // Validate PrimaryMoodId
+            if (inputModel.PrimaryMoodId <= 0)
+            {
+                Snackbar.Add("Please select a primary mood", Severity.Warning);
+                return;
+            }
+
             // Get content from Quill editor
             var editorContent = await JSRuntime.InvokeAsync<string>("getQuillHtml", "quill-editor");
             inputModel.Content = editorContent;
@@ -342,6 +364,13 @@
     {
         inputModel = new JournalEntryInputModel { Date = DateTime.Today };
         newTagsInput = string.Empty;
+        
+        // Set a default mood if available
+        if (moods?.Any() == true)
+        {
+            inputModel.PrimaryMoodId = moods.First().Id;
+        }
+        
         // Clear the Quill editor
         _ = Task.Run(async () => {
             await Task.Delay(100); // Small delay to ensure DOM is ready
@@ -349,3 +378,19 @@
         });
     }
 }
+
+<style>
+.title-field .mud-input-control {
+    font-size: 1.25rem !important;
+}
+
+.title-field .mud-input-outlined {
+    font-size: 1.25rem !important;
+    font-weight: 500 !important;
+}
+
+.title-field .mud-input-label {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+}
+</style>

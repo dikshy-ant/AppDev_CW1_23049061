@@ -1,27 +1,61 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
-
-<div class="page">
-    <div class="sidebar @(_isSidebarCollapsed ? "collapsed" : "")">
-        <NavMenu @ref="navMenu" />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">MyJournal</a>
+@if (IsAuthenticated)
+{
+    <div class="page">
+        <div class="sidebar">
+            <NavMenu @ref="navMenu" />
         </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+        <main>
+            <div class="top-row px-4">
+                <div class="d-flex align-items-center">
+                    <MudIcon Icon="@Icons.Material.Filled.Book" Class="me-2" Color="Color.Inherit" />
+                    <span class="app-title">My Journal App</span>
+                </div>
+            </div>
+
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    </div>
+}
+else
+{
+    <div class="pin-only-container">
+        @Body
+    </div>
+}
+
+<style>
+    .pin-only-container {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .app-title {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .top-row {
+        background-color: #333;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+    }
+</style>
 
 @code {
     private NavMenu? navMenu;
-    private bool _isSidebarCollapsed = false;
+    
+    [CascadingParameter]
+    public bool IsAuthenticated { get; set; } = false;
 }

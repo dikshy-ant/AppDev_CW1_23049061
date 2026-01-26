@@ -352,17 +352,17 @@ else
 
     private Color GetMoodColor(MoodCategory category) => category switch
     {
-        MoodCategory.Positive => Color.Success,
-        MoodCategory.Neutral => Color.Warning,
-        MoodCategory.Negative => Color.Error,
+        MoodCategory.Positive => Color.Default,
+        MoodCategory.Neutral => Color.Default,
+        MoodCategory.Negative => Color.Default,
         _ => Color.Default
     };
 
     private string GetMoodColorClass(MoodCategory category) => category switch
     {
-        MoodCategory.Positive => "success",
-        MoodCategory.Neutral => "warning", 
-        MoodCategory.Negative => "error",
+        MoodCategory.Positive => "default",
+        MoodCategory.Neutral => "default", 
+        MoodCategory.Negative => "default",
         _ => "default"
     };
 }
@@ -388,27 +388,32 @@ else
 }
 
 .chip-primary {
-    color: var(--mud-palette-primary);
+    color: #333;
 }
 
 .chip-secondary {
-    color: var(--mud-palette-secondary);
+    color: #333;
 }
 
 .chip-success {
-    color: var(--mud-palette-success);
+    color: #333;
 }
 
 .chip-warning {
-    color: var(--mud-palette-warning);
+    color: #333;
 }
 
 .chip-error {
-    color: var(--mud-palette-error);
+    color: #333;
 }
 
 .chip-default {
-    color: var(--mud-palette-text-primary);
+    color: #333;
+}
+
+.chip-filled.chip-default {
+    background-color: #333;
+    color: white;
 }
 
 .entry-content {

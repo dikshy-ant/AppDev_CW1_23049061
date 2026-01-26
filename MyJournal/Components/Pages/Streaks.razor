@@ -23,7 +23,7 @@ else if (stats != null)
 {
     <MudContainer MaxWidth="MaxWidth.Large" Class="mt-4">
         <!-- Current Streak Card -->
-        <MudPaper Elevation="3" Class="pa-4 mb-4">
+        <MudPaper Elevation="3" Class="pa-4 mb-4 current-streak-card">
             <div class="text-center">
                 <MudText Typo="Typo.h3" Color="Color.Primary">
                      @stats.CurrentStreak
@@ -59,7 +59,7 @@ else if (stats != null)
                 else
                 {
                     <MudAlert Severity="Severity.Success" Class="mt-2">
-                        🏆 Incredible! @stats.CurrentStreak days - you're a journaling master!
+                        Incredible! @stats.CurrentStreak days - you're a journaling master!
                     </MudAlert>
                 }
             </div>
@@ -67,33 +67,22 @@ else if (stats != null)
 
         <!-- Statistics Grid -->
         <MudGrid Spacing="3" Class="mb-4">
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-3 text-center">
-                    <MudIcon Icon="@Icons.Material.Filled.EmojiEvents" Size="Size.Large" Color="Color.Warning" Class="mb-2" />
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-3 text-center stat-card">
                     <MudText Typo="Typo.h4">@stats.LongestStreak</MudText>
                     <MudText Typo="Typo.body2">Longest Streak</MudText>
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-3 text-center">
-                    <MudIcon Icon="@Icons.Material.Filled.Book" Size="Size.Large" Color="Color.Primary" Class="mb-2" />
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-3 text-center stat-card">
                     <MudText Typo="Typo.h4">@stats.TotalJournalDays</MudText>
                     <MudText Typo="Typo.body2">Total Entries</MudText>
                 </MudPaper>
             </MudItem>
 
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-3 text-center">
-                    <MudIcon Icon="@Icons.Material.Filled.TrendingUp" Size="Size.Large" Color="Color.Success" Class="mb-2" />
-                    <MudText Typo="Typo.h4">@stats.JournalingFrequency:F1%</MudText>
-                    <MudText Typo="Typo.body2">Consistency</MudText>
-                </MudPaper>
-            </MudItem>
-
-            <MudItem xs="12" sm="6" md="3">
-                <MudPaper Elevation="2" Class="pa-3 text-center">
-                    <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Large" Color="Color.Error" Class="mb-2" />
+            <MudItem xs="12" sm="6" md="4">
+                <MudPaper Elevation="2" Class="pa-3 text-center stat-card">
                     <MudText Typo="Typo.h4">@stats.TotalMissedDays</MudText>
                     <MudText Typo="Typo.body2">Missed Days</MudText>
                 </MudPaper>
@@ -104,14 +93,12 @@ else if (stats != null)
         <div class="text-center mt-4">
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
-                       StartIcon="@Icons.Material.Filled.Edit"
                        Href="/journal">
                 Write Today's Entry
             </MudButton>
 
             <MudButton Variant="Variant.Outlined"
                        Color="Color.Secondary"
-                       StartIcon="@Icons.Material.Filled.BarChart"
                        Href="/analytics">
                 View Analytics
             </MudButton>
@@ -145,3 +132,22 @@ else if (stats != null)
         }
     }
 }
+
+<style>
+.current-streak-card {
+    background: white !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+.stat-card {
+    background: white !important;
+    border: 1px solid #e9ecef !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    transition: box-shadow 0.2s ease !important;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+}
+</style>

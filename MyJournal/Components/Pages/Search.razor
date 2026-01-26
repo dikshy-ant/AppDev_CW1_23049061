@@ -4,9 +4,11 @@
 @using MyJournal.Models.Display
 @using MyJournal.Models.Input
 @inject JournalService JournalService
+@inject ExportService ExportService
 @inject ISnackbar Snackbar
 @inject NavigationManager NavigationManager
 @inject PinProtectionService PinProtectionService
+@inject IJSRuntime JSRuntime
 
 <div class="text-center mb-4">
     <h2>Search & Filter Journal Entries</h2>
@@ -121,9 +123,25 @@
         <MudPaper Elevation="1" Class="pa-4">
             <div class="d-flex justify-space-between align-center mb-3">
                 <h3>Search Results (@totalResults entries found)</h3>
-                <MudText Typo="Typo.caption" Class="text-muted">
-                    Page @currentPage of @totalPages
-                </MudText>
+                <div class="d-flex align-center gap-3">
+                    @if (searchModel.StartDate.HasValue && searchModel.EndDate.HasValue && totalResults > 0)
+                    {
+                        <MudButton Variant="Variant.Filled" 
+                                   Color="Color.Success"
+                                   StartIcon="@Icons.Material.Filled.Download"
+                                   OnClick="ExportJournalsByDateRange"
+                                   Disabled="isExporting">
+                            @if (isExporting)
+                            {
+                                <MudProgressCircular Size="Size.Small" Class="mr-2" />
+                            }
+                            Export Journals
+                        </MudButton>
+                    }
+                    <MudText Typo="Typo.caption" Class="text-muted">
+                        Page @currentPage of @totalPages
+                    </MudText>
+                </div>
             </div>
 
             @foreach (var entry in searchResults)
@@ -275,6 +293,7 @@
     private List<Category>? categories;
     private List<Tag>? tags;
     private bool isSearching = false;
+    private bool isExporting = false;
     private int currentPage = 1;
     private int totalPages = 1;
     private int totalResults = 0;
@@ -409,69 +428,126 @@
             await GoToPage(currentPage - 1);
         }
     }
+
+    private async Task ExportJournalsByDateRange()
+    {
+        if (!searchModel.StartDate.HasValue || !searchModel.EndDate.HasValue)
+        {
+            Snackbar.Add("Please select both start and end dates for export", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            isExporting = true;
+            StateHasChanged();
+
+            // Export entries for the selected date range
+            var pdfBytes = await ExportService.ExportToPdfAsync(searchModel.StartDate.Value, searchModel.EndDate.Value);
+
+            // Create filename
+            var fileName = $"JournalExport_{searchModel.StartDate.Value:yyyyMMdd}_to_{searchModel.EndDate.Value:yyyyMMdd}.pdf";
+
+            // Download the file
+            await DownloadFile(fileName, pdfBytes);
+
+            Snackbar.Add($"Successfully exported {totalResults} journal entries!", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error exporting journals: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DownloadFile(string fileName, byte[] fileBytes)
+    {
+        // Create a data URL for the file
+        var mimeType = "application/pdf";
+        var dataUrl = $"data:{mimeType};base64,{Convert.ToBase64String(fileBytes)}";
+
+        // Use JavaScript to trigger download
+        await JSRuntime.InvokeVoidAsync("downloadFile", fileName, dataUrl);
+    }
 }
 
 <style>
 .entry-card {
-    border: 1px solid var(--mud-palette-grey-default);
-    background: var(--mud-palette-surface);
+    border: 1px solid #e9ecef;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .entry-date {
     font-weight: 600;
-    color: var(--mud-palette-primary);
+    color: #333;
     font-size: 0.95rem;
 }
 
 .mood-display {
     font-size: 1.1rem;
     font-weight: 500;
-    color: var(--mud-palette-text-primary);
+    color: #333;
 }
 
 .entry-content-preview {
-    color: var(--mud-palette-text-secondary);
+    color: #666;
     line-height: 1.6;
     font-size: 0.95rem;
-    border-left: 3px solid var(--mud-palette-grey-light);
+    border-left: 3px solid #e9ecef;
     padding-left: 12px;
     margin: 16px 0;
 }
 
 .word-count {
     font-size: 0.85rem;
-    color: var(--mud-palette-text-disabled);
+    color: #6c757d;
     font-weight: 500;
 }
 
 .tag-chip {
     display: inline-block;
     padding: 4px 10px;
-    background-color: var(--mud-palette-grey-light);
-    color: var(--mud-palette-text-secondary);
+    background-color: #f8f9fa;
+    color: #495057;
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
-    border: 1px solid var(--mud-palette-grey-default);
+    border: 1px solid #e9ecef;
     transition: all 0.2s ease;
 }
 
 .tag-chip:hover {
-    background-color: var(--mud-palette-primary);
+    background-color: #333;
     color: white;
     transform: scale(1.05);
 }
 
 .tag-chip.more-tags {
-    background-color: var(--mud-palette-secondary);
+    background-color: #6c757d;
     color: white;
-    border-color: var(--mud-palette-secondary);
+    border-color: #6c757d;
 }
 
 .pagination-dots {
     padding: 0 8px;
-    color: var(--mud-palette-text-secondary);
+    color: #666;
     font-weight: 500;
     align-self: center;
 }
 </style>
+
+<script>
+    function downloadFile(fileName, dataUrl) {
+        const link = document.createElement('a');
+        link.href = dataUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
