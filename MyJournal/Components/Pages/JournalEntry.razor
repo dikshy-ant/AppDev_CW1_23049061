@@ -385,7 +385,7 @@
         if (string.IsNullOrEmpty(iconString))
             return Icons.Material.Filled.Face;
 
-        // Remove the @Icons.Material.Filled. prefix if it exists
+        // Handle both old Unicode emojis and new MudBlazor icon references
         if (iconString.StartsWith("@Icons.Material.Filled."))
         {
             var iconName = iconString.Replace("@Icons.Material.Filled.", "");
@@ -410,7 +410,25 @@
             };
         }
 
-        return Icons.Material.Filled.Face;
+        // Old Unicode emojis - map to appropriate MudBlazor icons
+        return iconString switch
+        {
+            "😊" => Icons.Material.Filled.SentimentVerySatisfied,
+            "🎉" => Icons.Material.Filled.Celebration,
+            "😌" => Icons.Material.Filled.Spa,
+            "🙏" => Icons.Material.Filled.VolunteerActivism,
+            "💪" => Icons.Material.Filled.FitnessCenter,
+            "🤔" => Icons.Material.Filled.Psychology,
+            "🧐" => Icons.Material.Filled.TravelExplore,
+            "📷" => Icons.Material.Filled.PhotoCamera,
+            "😑" => Icons.Material.Filled.HourglassEmpty,
+            "😢" => Icons.Material.Filled.SentimentVeryDissatisfied,
+            "😠" => Icons.Material.Filled.MoodBad,
+            "😰" => Icons.Material.Filled.PsychologyAlt,
+            "😔" => Icons.Material.Filled.PersonOff,
+            "😟" => Icons.Material.Filled.HealthAndSafety,
+            _ => Icons.Material.Filled.Face
+        };
     }
 
     private void ToggleSecondaryMood(int moodId)

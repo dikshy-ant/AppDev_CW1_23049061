@@ -97,7 +97,7 @@
                         <p>Word Count: @selectedEntry.WordCount</p>
                         @if (selectedEntry.PrimaryMood != null)
                         {
-                            <p>Mood: @selectedEntry.PrimaryMood.Icon @selectedEntry.PrimaryMood.Name</p>
+                            <p>Mood: <MudIcon Icon="@GetMoodIcon(selectedEntry.PrimaryMood.Icon)" Size="Size.Small" Class="mr-1" />@selectedEntry.PrimaryMood.Name</p>
                         }
                         <div class="mt-2">
                             <MudButton Variant="Variant.Filled" 
@@ -224,6 +224,57 @@
         selectedDate = date;
         selectedEntry = allEntries.FirstOrDefault(e => e.Date.Date == date.Date);
         await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetMoodIcon(string? iconString)
+    {
+        if (string.IsNullOrEmpty(iconString))
+            return Icons.Material.Filled.Face;
+
+        // Handle both old Unicode emojis and new MudBlazor icon references
+        if (iconString.StartsWith("@Icons.Material.Filled."))
+        {
+            var iconName = iconString.Replace("@Icons.Material.Filled.", "");
+            return iconName switch
+            {
+                "SentimentVerySatisfied" => Icons.Material.Filled.SentimentVerySatisfied,
+                "Celebration" => Icons.Material.Filled.Celebration,
+                "Spa" => Icons.Material.Filled.Spa,
+                "VolunteerActivism" => Icons.Material.Filled.VolunteerActivism,
+                "FitnessCenter" => Icons.Material.Filled.FitnessCenter,
+                "Water" => Icons.Material.Filled.Water,
+                "Psychology" => Icons.Material.Filled.Psychology,
+                "TravelExplore" => Icons.Material.Filled.TravelExplore,
+                "PhotoCamera" => Icons.Material.Filled.PhotoCamera,
+                "HourglassEmpty" => Icons.Material.Filled.HourglassEmpty,
+                "SentimentVeryDissatisfied" => Icons.Material.Filled.SentimentVeryDissatisfied,
+                "MoodBad" => Icons.Material.Filled.MoodBad,
+                "PsychologyAlt" => Icons.Material.Filled.PsychologyAlt,
+                "PersonOff" => Icons.Material.Filled.PersonOff,
+                "HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
+                _ => Icons.Material.Filled.Face
+            };
+        }
+
+        // Old Unicode emojis - map to appropriate MudBlazor icons
+        return iconString switch
+        {
+            "😊" => Icons.Material.Filled.SentimentVerySatisfied,
+            "🎉" => Icons.Material.Filled.Celebration,
+            "😌" => Icons.Material.Filled.Spa,
+            "🙏" => Icons.Material.Filled.VolunteerActivism,
+            "💪" => Icons.Material.Filled.FitnessCenter,
+            "🤔" => Icons.Material.Filled.Psychology,
+            "🧐" => Icons.Material.Filled.TravelExplore,
+            "📷" => Icons.Material.Filled.PhotoCamera,
+            "😑" => Icons.Material.Filled.HourglassEmpty,
+            "😢" => Icons.Material.Filled.SentimentVeryDissatisfied,
+            "😠" => Icons.Material.Filled.MoodBad,
+            "😰" => Icons.Material.Filled.PsychologyAlt,
+            "😔" => Icons.Material.Filled.PersonOff,
+            "😟" => Icons.Material.Filled.HealthAndSafety,
+            _ => Icons.Material.Filled.Face
+        };
     }
 }
 
