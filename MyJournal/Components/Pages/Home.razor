@@ -96,6 +96,16 @@
                                 <span class="mood-emoji">@entry.PrimaryMood.Icon</span>
                                 <span class="mood-name">@entry.PrimaryMood.Name</span>
                             </div>
+                            
+                            @if (entry.SecondaryMoods.Any())
+                            {
+                                <div class="secondary-moods">
+                                    @foreach (var mood in entry.SecondaryMoods)
+                                    {
+                                        <span class="secondary-mood">@mood.Icon @mood.Name</span>
+                                    }
+                                </div>
+                            }
                         </div>
                     }
 
@@ -419,6 +429,23 @@
     font-weight: 500;
     color: #333;
     font-size: 0.9rem;
+}
+
+.secondary-moods {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.secondary-mood {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 400;
+    border: 1px solid rgba(108, 117, 125, 0.2);
 }
 
 /* Content Preview */

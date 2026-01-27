@@ -182,7 +182,6 @@ else
 @code {
     private AnalyticsDisplayModel? analyticsData;
     private bool isLoading = true;
-    private string selectedPeriod = "Last 7 Days";
 
     protected override async Task OnInitializedAsync()
     {
@@ -199,8 +198,8 @@ else
             isLoading = true;
             StateHasChanged();
 
-            var (startDate, endDate) = GetDateRangeForPeriod(selectedPeriod);
-            var result = await JournalService.GetAnalyticsAsync(startDate, endDate);
+            // Fetch data from entire database (all time)
+            var result = await JournalService.GetAnalyticsAsync(DateTime.MinValue, DateTime.Today);
 
             if (result.Success)
             {
@@ -220,18 +219,6 @@ else
             isLoading = false;
             StateHasChanged();
         }
-    }
-
-    private (DateTime startDate, DateTime endDate) GetDateRangeForPeriod(string period)
-    {
-        var today = DateTime.Today;
-        return period switch
-        {
-            "Last 7 Days" => (today.AddDays(-7), today),
-            "Last 90 Days" => (today.AddDays(-90), today),
-            "All Time" => (DateTime.MinValue, today),
-            _ => (today.AddDays(-7), today)
-        };
     }
 
     private Color GetMoodColor(MoodCategory category) => category switch

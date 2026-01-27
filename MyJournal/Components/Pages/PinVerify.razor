@@ -8,7 +8,7 @@
 @inject NavigationManager NavigationManager
 
 <MudContainer MaxWidth="MaxWidth.Small" Class="mt-8">
-    <MudPaper Elevation="8" Class="pa-6 text-center">
+    <MudPaper Elevation="8" Class="pa-6 text-center pin-card">
         <MudIcon Icon="@Icons.Material.Filled.Lock" Size="Size.Large" Class="mb-4" />
         
         <MudText Typo="Typo.h4" Class="mb-2">
@@ -160,3 +160,27 @@
         // This is a simplified version for demonstration
     }
 }
+
+<style>
+    .pin-card {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+    
+    .pin-card .mud-text {
+        color: #000000 !important;
+    }
+    
+    .pin-card .mud-input-outlined {
+        color: #000000 !important;
+    }
+    
+    .pin-card .mud-input-outlined .mud-input-slot {
+        color: #000000 !important;
+    }
+    
+    .pin-card .mud-button-filled-primary {
+        background-color: #1976d2 !important;
+        color: #ffffff !important;
+    }
+</style>

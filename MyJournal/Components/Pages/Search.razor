@@ -45,7 +45,7 @@
                 </MudItem>
 
                 <!-- Mood Filter -->
-                <MudItem xs="12" md="4">
+                <MudItem xs="12" md="6">
                     <MudSelect T="int?" Label="Filter by Primary Mood" Variant="Variant.Outlined" @bind-Value="searchModel.PrimaryMoodId" Clearable="true">
                         @if (moods?.Any() == true)
                         {
@@ -57,21 +57,8 @@
                     </MudSelect>
                 </MudItem>
 
-                <!-- Category Filter -->
-                <MudItem xs="12" md="4">
-                    <MudSelect T="int?" Label="Filter by Category" Variant="Variant.Outlined" @bind-Value="searchModel.CategoryId" Clearable="true">
-                        @if (categories?.Any() == true)
-                        {
-                            @foreach (var category in categories)
-                            {
-                                <MudSelectItem T="int?" Value="@category.Id">@category.Name</MudSelectItem>
-                            }
-                        }
-                    </MudSelect>
-                </MudItem>
-
                 <!-- Tag Filter -->
-                <MudItem xs="12" md="4">
+                <MudItem xs="12" md="6">
                     <MudSelect T="int?" Label="Filter by Tag" Variant="Variant.Outlined" @bind-Value="searchModel.TagId" Clearable="true">
                         @if (tags?.Any() == true)
                         {
@@ -163,15 +150,6 @@
                             {
                                 <div class="d-flex align-center gap-2 mb-2">
                                     <span class="mood-display">@entry.PrimaryMood.Icon @entry.PrimaryMood.Name</span>
-                                </div>
-                            }
-
-                            @if (entry.Category != null)
-                            {
-                                <div class="d-flex align-center gap-2 mb-2">
-                                    <MudChip T="bool" Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small">
-                                        @entry.Category.Name
-                                    </MudChip>
                                 </div>
                             }
                         </div>
@@ -290,7 +268,6 @@
     private SearchInputModel searchModel = new SearchInputModel();
     private List<JournalEntryDisplayModel>? searchResults;
     private List<Mood>? moods;
-    private List<Category>? categories;
     private List<Tag>? tags;
     private bool isSearching = false;
     private bool isExporting = false;
@@ -316,22 +293,10 @@
                 moods = moodsResult.Data ?? new List<Mood>();
             }
 
-            // Load categories and tags
+            // Load tags
             var entriesResult = await JournalService.GetEntriesAsync(DateTime.MinValue, DateTime.Today, 1, 1000);
             if (entriesResult.Success && entriesResult.Data != null)
             {
-                categories = entriesResult.Data
-                    .Where(e => e.Category != null)
-                    .Select(e => new Category 
-                    { 
-                        Id = e.Category!.Id, 
-                        Name = e.Category!.Name, 
-                        Description = e.Category!.Description,
-                        Color = e.Category!.Color
-                    })
-                    .DistinctBy(c => c.Id)
-                    .ToList();
-
                 tags = entriesResult.Data
                     .SelectMany(e => e.Tags)
                     .Select(t => new Tag { Id = t.Id, Name = t.Name, Color = t.Color })
