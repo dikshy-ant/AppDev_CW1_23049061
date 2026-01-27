@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MyJournal.Entities;
 
 namespace MyJournal.Models.Input
 {
@@ -11,6 +12,8 @@ namespace MyJournal.Models.Input
         public DateTime? EndDate { get; set; }
         
         public int? PrimaryMoodId { get; set; }
+        
+        public MoodCategory? MoodCategory { get; set; }
         
         public int? CategoryId { get; set; }
         

@@ -93,7 +93,7 @@
                     {
                         <div class="mood-section">
                             <div class="mood-indicator">
-                                <span class="mood-emoji">@entry.PrimaryMood.Icon</span>
+                                <MudIcon Icon="@GetMoodIcon(entry.PrimaryMood.Icon)" Size="Size.Small" Class="mood-emoji" />
                                 <span class="mood-name">@entry.PrimaryMood.Name</span>
                             </div>
                             
@@ -102,7 +102,10 @@
                                 <div class="secondary-moods">
                                     @foreach (var mood in entry.SecondaryMoods)
                                     {
-                                        <span class="secondary-mood">@mood.Icon @mood.Name</span>
+                                        <span class="secondary-mood">
+                                            <MudIcon Icon="@GetMoodIcon(mood.Icon)" Size="Size.Small" Class="mr-1" />
+                                            @mood.Name
+                                        </span>
                                     }
                                 </div>
                             }
@@ -225,6 +228,39 @@
         MoodCategory.Negative => "error",
         _ => "default"
     };
+
+    private string GetMoodIcon(string? iconString)
+    {
+        if (string.IsNullOrEmpty(iconString))
+            return Icons.Material.Filled.Face;
+
+        // Remove the @Icons.Material.Filled. prefix if it exists
+        if (iconString.StartsWith("@Icons.Material.Filled."))
+        {
+            var iconName = iconString.Replace("@Icons.Material.Filled.", "");
+            return iconName switch
+            {
+                "SentimentVerySatisfied" => Icons.Material.Filled.SentimentVerySatisfied,
+                "Celebration" => Icons.Material.Filled.Celebration,
+                "Spa" => Icons.Material.Filled.Spa,
+                "VolunteerActivism" => Icons.Material.Filled.VolunteerActivism,
+                "FitnessCenter" => Icons.Material.Filled.FitnessCenter,
+                "Water" => Icons.Material.Filled.Water,
+                "Psychology" => Icons.Material.Filled.Psychology,
+                "TravelExplore" => Icons.Material.Filled.TravelExplore,
+                "PhotoCamera" => Icons.Material.Filled.PhotoCamera,
+                "HourglassEmpty" => Icons.Material.Filled.HourglassEmpty,
+                "SentimentVeryDissatisfied" => Icons.Material.Filled.SentimentVeryDissatisfied,
+                "MoodBad" => Icons.Material.Filled.MoodBad,
+                "PsychologyAlt" => Icons.Material.Filled.PsychologyAlt,
+                "PersonOff" => Icons.Material.Filled.PersonOff,
+                "HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
+                _ => Icons.Material.Filled.Face
+            };
+        }
+
+        return Icons.Material.Filled.Face;
+    }
 }
 
 <style>

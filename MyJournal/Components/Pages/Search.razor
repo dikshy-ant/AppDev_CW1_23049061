@@ -45,20 +45,41 @@
                 </MudItem>
 
                 <!-- Mood Filter -->
-                <MudItem xs="12" md="6">
+                <MudItem xs="12" md="4">
                     <MudSelect T="int?" Label="Filter by Primary Mood" Variant="Variant.Outlined" @bind-Value="searchModel.PrimaryMoodId" Clearable="true">
                         @if (moods?.Any() == true)
                         {
                             @foreach (var mood in moods)
                             {
-                                <MudSelectItem T="int?" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                                <MudSelectItem T="int?" Value="@mood.Id">
+                                    <MudIcon Icon="@GetMoodIcon(mood.Icon)" Size="Size.Small" Class="mr-2" />
+                                    @mood.Name (@mood.Category)
+                                </MudSelectItem>
                             }
                         }
                     </MudSelect>
                 </MudItem>
 
+                <!-- Mood Category Filter -->
+                <MudItem xs="12" md="4">
+                    <MudSelect T="MoodCategory?" Label="Filter by Mood Category" Variant="Variant.Outlined" @bind-Value="searchModel.MoodCategory" Clearable="true">
+                        <MudSelectItem T="MoodCategory?" Value="@MoodCategory.Positive">
+                            <MudIcon Icon="@Icons.Material.Filled.SentimentVerySatisfied" Size="Size.Small" Class="mr-2" />
+                            Positive (5 moods)
+                        </MudSelectItem>
+                        <MudSelectItem T="MoodCategory?" Value="@MoodCategory.Neutral">
+                            <MudIcon Icon="@Icons.Material.Filled.Psychology" Size="Size.Small" Class="mr-2" />
+                            Neutral (5 moods)
+                        </MudSelectItem>
+                        <MudSelectItem T="MoodCategory?" Value="@MoodCategory.Negative">
+                            <MudIcon Icon="@Icons.Material.Filled.MoodBad" Size="Size.Small" Class="mr-2" />
+                            Negative (5 moods)
+                        </MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+
                 <!-- Tag Filter -->
-                <MudItem xs="12" md="6">
+                <MudItem xs="12" md="4">
                     <MudSelect T="int?" Label="Filter by Tag" Variant="Variant.Outlined" @bind-Value="searchModel.TagId" Clearable="true">
                         @if (tags?.Any() == true)
                         {
@@ -149,7 +170,10 @@
                             @if (entry.PrimaryMood != null)
                             {
                                 <div class="d-flex align-center gap-2 mb-2">
-                                    <span class="mood-display">@entry.PrimaryMood.Icon @entry.PrimaryMood.Name</span>
+                                    <span class="mood-display">
+                                        <MudIcon Icon="@GetMoodIcon(entry.PrimaryMood.Icon)" Size="Size.Small" Class="mr-1" />
+                                        @entry.PrimaryMood.Name (@entry.PrimaryMood.Category)
+                                    </span>
                                 </div>
                             }
                         </div>
@@ -437,6 +461,39 @@
 
         // Use JavaScript to trigger download
         await JSRuntime.InvokeVoidAsync("downloadFile", fileName, dataUrl);
+    }
+
+    private string GetMoodIcon(string? iconString)
+    {
+        if (string.IsNullOrEmpty(iconString))
+            return Icons.Material.Filled.Face;
+
+        // Remove the @Icons.Material.Filled. prefix if it exists
+        if (iconString.StartsWith("@Icons.Material.Filled."))
+        {
+            var iconName = iconString.Replace("@Icons.Material.Filled.", "");
+            return iconName switch
+            {
+                "SentimentVerySatisfied" => Icons.Material.Filled.SentimentVerySatisfied,
+                "Celebration" => Icons.Material.Filled.Celebration,
+                "Spa" => Icons.Material.Filled.Spa,
+                "VolunteerActivism" => Icons.Material.Filled.VolunteerActivism,
+                "FitnessCenter" => Icons.Material.Filled.FitnessCenter,
+                "Water" => Icons.Material.Filled.Water,
+                "Psychology" => Icons.Material.Filled.Psychology,
+                "TravelExplore" => Icons.Material.Filled.TravelExplore,
+                "PhotoCamera" => Icons.Material.Filled.PhotoCamera,
+                "HourglassEmpty" => Icons.Material.Filled.HourglassEmpty,
+                "SentimentVeryDissatisfied" => Icons.Material.Filled.SentimentVeryDissatisfied,
+                "MoodBad" => Icons.Material.Filled.MoodBad,
+                "PsychologyAlt" => Icons.Material.Filled.PsychologyAlt,
+                "PersonOff" => Icons.Material.Filled.PersonOff,
+                "HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
+                _ => Icons.Material.Filled.Face
+            };
+        }
+
+        return Icons.Material.Filled.Face;
     }
 }
 

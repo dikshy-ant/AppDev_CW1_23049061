@@ -85,25 +85,25 @@ namespace MyJournal.Data
             // Seed default moods
             modelBuilder.Entity<Mood>().HasData(
                 // Positive moods
-                new Mood { Id = 1, Name = "Happy", Category = MoodCategory.Positive, Icon = "😊", Color = "#FFD700" },
-                new Mood { Id = 2, Name = "Excited", Category = MoodCategory.Positive, Icon = "🎉", Color = "#FF6B6B" },
-                new Mood { Id = 3, Name = "Relaxed", Category = MoodCategory.Positive, Icon = "😌", Color = "#87CEEB" },
-                new Mood { Id = 4, Name = "Grateful", Category = MoodCategory.Positive, Icon = "🙏", Color = "#98FB98" },
-                new Mood { Id = 5, Name = "Confident", Category = MoodCategory.Positive, Icon = "💪", Color = "#DDA0DD" },
+                new Mood { Id = 1, Name = "Happy", Category = MoodCategory.Positive, Icon = "@Icons.Material.Filled.SentimentVerySatisfied", Color = "#FFD700" },
+                new Mood { Id = 2, Name = "Excited", Category = MoodCategory.Positive, Icon = "@Icons.Material.Filled.Celebration", Color = "#FF6B6B" },
+                new Mood { Id = 3, Name = "Relaxed", Category = MoodCategory.Positive, Icon = "@Icons.Material.Filled.Spa", Color = "#87CEEB" },
+                new Mood { Id = 4, Name = "Grateful", Category = MoodCategory.Positive, Icon = "@Icons.Material.Filled.VolunteerActivism", Color = "#98FB98" },
+                new Mood { Id = 5, Name = "Confident", Category = MoodCategory.Positive, Icon = "@Icons.Material.Filled.FitnessCenter", Color = "#DDA0DD" },
                 
                 // Neutral moods
-                new Mood { Id = 6, Name = "Calm", Category = MoodCategory.Neutral, Icon = "😊", Color = "#B0E0E6" },
-                new Mood { Id = 7, Name = "Thoughtful", Category = MoodCategory.Neutral, Icon = "🤔", Color = "#D3D3D3" },
-                new Mood { Id = 8, Name = "Curious", Category = MoodCategory.Neutral, Icon = "🧐", Color = "#F0E68C" },
-                new Mood { Id = 9, Name = "Nostalgic", Category = MoodCategory.Neutral, Icon = "📷", Color = "#DDA0DD" },
-                new Mood { Id = 10, Name = "Bored", Category = MoodCategory.Neutral, Icon = "😑", Color = "#A9A9A9" },
+                new Mood { Id = 6, Name = "Calm", Category = MoodCategory.Neutral, Icon = "@Icons.Material.Filled.Water", Color = "#B0E0E6" },
+                new Mood { Id = 7, Name = "Thoughtful", Category = MoodCategory.Neutral, Icon = "@Icons.Material.Filled.Psychology", Color = "#D3D3D3" },
+                new Mood { Id = 8, Name = "Curious", Category = MoodCategory.Neutral, Icon = "@Icons.Material.Filled.TravelExplore", Color = "#F0E68C" },
+                new Mood { Id = 9, Name = "Nostalgic", Category = MoodCategory.Neutral, Icon = "@Icons.Material.Filled.PhotoCamera", Color = "#DDA0DD" },
+                new Mood { Id = 10, Name = "Bored", Category = MoodCategory.Neutral, Icon = "@Icons.Material.Filled.HourglassEmpty", Color = "#A9A9A9" },
                 
                 // Negative moods
-                new Mood { Id = 11, Name = "Sad", Category = MoodCategory.Negative, Icon = "😢", Color = "#4682B4" },
-                new Mood { Id = 12, Name = "Angry", Category = MoodCategory.Negative, Icon = "😠", Color = "#DC143C" },
-                new Mood { Id = 13, Name = "Stressed", Category = MoodCategory.Negative, Icon = "😰", Color = "#FF8C00" },
-                new Mood { Id = 14, Name = "Lonely", Category = MoodCategory.Negative, Icon = "😔", Color = "#708090" },
-                new Mood { Id = 15, Name = "Anxious", Category = MoodCategory.Negative, Icon = "😟", Color = "#9370DB" }
+                new Mood { Id = 11, Name = "Sad", Category = MoodCategory.Negative, Icon = "@Icons.Material.Filled.SentimentVeryDissatisfied", Color = "#4682B4" },
+                new Mood { Id = 12, Name = "Angry", Category = MoodCategory.Negative, Icon = "@Icons.Material.Filled.MoodBad", Color = "#DC143C" },
+                new Mood { Id = 13, Name = "Stressed", Category = MoodCategory.Negative, Icon = "@Icons.Material.Filled.PsychologyAlt", Color = "#FF8C00" },
+                new Mood { Id = 14, Name = "Lonely", Category = MoodCategory.Negative, Icon = "@Icons.Material.Filled.PersonOff", Color = "#708090" },
+                new Mood { Id = 15, Name = "Anxious", Category = MoodCategory.Negative, Icon = "@Icons.Material.Filled.HealthAndSafety", Color = "#9370DB" }
             );
 
             modelBuilder.Entity<Category>().HasData(

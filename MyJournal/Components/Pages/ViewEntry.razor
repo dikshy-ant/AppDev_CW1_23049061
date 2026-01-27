@@ -78,7 +78,8 @@ else if (entry != null)
                 {
                     <div class="mb-2">
                         <span class="chip chip-@GetMoodColorClass(entry.PrimaryMood.Category) chip-filled">
-                            @entry.PrimaryMood.Icon @entry.PrimaryMood.Name
+                            <MudIcon Icon="@GetMoodIcon(entry.PrimaryMood.Icon)" Size="Size.Small" Class="mr-1" />
+                            @entry.PrimaryMood.Name (@entry.PrimaryMood.Category)
                         </span>
                     </div>
                 }
@@ -90,7 +91,8 @@ else if (entry != null)
                         @foreach (var mood in entry.SecondaryMoods)
                         {
                             <span class="chip chip-@GetMoodColorClass(mood.Category) chip-outlined mr-1">
-                                @mood.Icon @mood.Name
+                                <MudIcon Icon="@GetMoodIcon(mood.Icon)" Size="Size.Small" Class="mr-1" />
+                                @mood.Name (@mood.Category)
                             </span>
                         }
                     </div>
@@ -360,11 +362,44 @@ else
 
     private string GetMoodColorClass(MoodCategory category) => category switch
     {
-        MoodCategory.Positive => "default",
-        MoodCategory.Neutral => "default", 
-        MoodCategory.Negative => "default",
+        MoodCategory.Positive => "success",
+        MoodCategory.Neutral => "warning", 
+        MoodCategory.Negative => "error",
         _ => "default"
     };
+
+    private string GetMoodIcon(string? iconString)
+    {
+        if (string.IsNullOrEmpty(iconString))
+            return Icons.Material.Filled.Face;
+
+        // Remove the @Icons.Material.Filled. prefix if it exists
+        if (iconString.StartsWith("@Icons.Material.Filled."))
+        {
+            var iconName = iconString.Replace("@Icons.Material.Filled.", "");
+            return iconName switch
+            {
+                "SentimentVerySatisfied" => Icons.Material.Filled.SentimentVerySatisfied,
+                "Celebration" => Icons.Material.Filled.Celebration,
+                "Spa" => Icons.Material.Filled.Spa,
+                "VolunteerActivism" => Icons.Material.Filled.VolunteerActivism,
+                "FitnessCenter" => Icons.Material.Filled.FitnessCenter,
+                "Water" => Icons.Material.Filled.Water,
+                "Psychology" => Icons.Material.Filled.Psychology,
+                "TravelExplore" => Icons.Material.Filled.TravelExplore,
+                "PhotoCamera" => Icons.Material.Filled.PhotoCamera,
+                "HourglassEmpty" => Icons.Material.Filled.HourglassEmpty,
+                "SentimentVeryDissatisfied" => Icons.Material.Filled.SentimentVeryDissatisfied,
+                "MoodBad" => Icons.Material.Filled.MoodBad,
+                "PsychologyAlt" => Icons.Material.Filled.PsychologyAlt,
+                "PersonOff" => Icons.Material.Filled.PersonOff,
+                "HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
+                _ => Icons.Material.Filled.Face
+            };
+        }
+
+        return Icons.Material.Filled.Face;
+    }
 }
 
 <style>
@@ -411,9 +446,34 @@ else
     color: #333;
 }
 
-.chip-filled.chip-default {
-    background-color: #333;
+.chip-filled.chip-success {
+    background-color: #4caf50;
     color: white;
+}
+
+.chip-filled.chip-warning {
+    background-color: #ff9800;
+    color: white;
+}
+
+.chip-filled.chip-error {
+    background-color: #f44336;
+    color: white;
+}
+
+.chip-outlined.chip-success {
+    color: #4caf50;
+    border-color: #4caf50;
+}
+
+.chip-outlined.chip-warning {
+    color: #ff9800;
+    border-color: #ff9800;
+}
+
+.chip-outlined.chip-error {
+    color: #f44336;
+    border-color: #f44336;
 }
 
 .entry-content {

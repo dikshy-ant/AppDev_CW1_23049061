@@ -45,15 +45,24 @@
                     {
                         @foreach (var mood in moods.Where(m => m.Category == MoodCategory.Positive))
                         {
-                            <MudSelectItem T="int" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            <MudSelectItem T="int" Value="@mood.Id">
+                                <MudIcon Icon="@GetMoodIcon(mood.Icon)" Size="Size.Small" Class="mr-2" />
+                                @mood.Name
+                            </MudSelectItem>
                         }
                         @foreach (var mood in moods.Where(m => m.Category == MoodCategory.Neutral))
                         {
-                            <MudSelectItem T="int" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            <MudSelectItem T="int" Value="@mood.Id">
+                                <MudIcon Icon="@GetMoodIcon(mood.Icon)" Size="Size.Small" Class="mr-2" />
+                                @mood.Name
+                            </MudSelectItem>
                         }
                         @foreach (var mood in moods.Where(m => m.Category == MoodCategory.Negative))
                         {
-                            <MudSelectItem T="int" Value="@mood.Id">@mood.Icon @mood.Name</MudSelectItem>
+                            <MudSelectItem T="int" Value="@mood.Id">
+                                <MudIcon Icon="@GetMoodIcon(mood.Icon)" Size="Size.Small" Class="mr-2" />
+                                @mood.Name
+                            </MudSelectItem>
                         }
                     }
                 </MudSelect>
@@ -369,6 +378,39 @@
             MoodCategory.Negative => Color.Error,
             _ => Color.Default
         };
+    }
+
+    private string GetMoodIcon(string? iconString)
+    {
+        if (string.IsNullOrEmpty(iconString))
+            return Icons.Material.Filled.Face;
+
+        // Remove the @Icons.Material.Filled. prefix if it exists
+        if (iconString.StartsWith("@Icons.Material.Filled."))
+        {
+            var iconName = iconString.Replace("@Icons.Material.Filled.", "");
+            return iconName switch
+            {
+                "SentimentVerySatisfied" => Icons.Material.Filled.SentimentVerySatisfied,
+                "Celebration" => Icons.Material.Filled.Celebration,
+                "Spa" => Icons.Material.Filled.Spa,
+                "VolunteerActivism" => Icons.Material.Filled.VolunteerActivism,
+                "FitnessCenter" => Icons.Material.Filled.FitnessCenter,
+                "Water" => Icons.Material.Filled.Water,
+                "Psychology" => Icons.Material.Filled.Psychology,
+                "TravelExplore" => Icons.Material.Filled.TravelExplore,
+                "PhotoCamera" => Icons.Material.Filled.PhotoCamera,
+                "HourglassEmpty" => Icons.Material.Filled.HourglassEmpty,
+                "SentimentVeryDissatisfied" => Icons.Material.Filled.SentimentVeryDissatisfied,
+                "MoodBad" => Icons.Material.Filled.MoodBad,
+                "PsychologyAlt" => Icons.Material.Filled.PsychologyAlt,
+                "PersonOff" => Icons.Material.Filled.PersonOff,
+                "HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
+                _ => Icons.Material.Filled.Face
+            };
+        }
+
+        return Icons.Material.Filled.Face;
     }
 
     private void ToggleSecondaryMood(int moodId)

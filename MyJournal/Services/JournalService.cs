@@ -573,6 +573,11 @@ namespace MyJournal.Services
                     query = query.Where(je => je.PrimaryMoodId == searchModel.PrimaryMoodId.Value);
                 }
 
+                if (searchModel.MoodCategory.HasValue)
+                {
+                    query = query.Where(je => je.PrimaryMood.Category == searchModel.MoodCategory.Value);
+                }
+
                 if (searchModel.CategoryId.HasValue)
                 {
                     query = query.Where(je => je.CategoryId == searchModel.CategoryId.Value);
